@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Promzy Market</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080e19;--panel:#111c2c;--green:#27df9b;--muted:#91a0b5}
+body{font-family:Inter,Arial,sans-serif;background:var(--bg);color:white;min-height:100vh}
+button{cursor:pointer;border:0}
+.layout{display:flex;min-height:100vh}
+aside{width:245px;background:#0d1625;border-right:1px solid #ffffff0d;padding:25px 17px;position:fixed;inset:0 auto 0 0}
+.logo{font-size:23px;font-weight:900;margin-bottom:45px;letter-spacing:-1px}
+.logo span{color:var(--green)}
+.nav-title{font-size:10px;color:#63748b;margin:25px 10px 12px;letter-spacing:2px}
+.nav{display:block;width:100%;text-align:left;padding:13px;border-radius:10px;color:#9eacc0;background:none;margin:4px 0;font-size:13px}
+.nav.active,.nav:hover{background:#1b302e;color:var(--green)}
+main{margin-left:245px;width:calc(100% - 245px);padding:30px 35px;max-width:1500px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}
+.search{background:var(--panel);border:1px solid #263247;padding:13px 17px;border-radius:12px;color:white;width:45%;outline:none}
+.profile{display:flex;align-items:center;gap:12px;font-size:13px}
+.avatar{background:#174e40;color:var(--green);padding:12px;border-radius:50%}
+.hero{padding:35px;border-radius:22px;background:linear-gradient(115deg,#124c3e,#142d39 65%,#17263e);position:relative;overflow:hidden;margin-bottom:25px}
+.hero:after{content:"✦";position:absolute;right:50px;top:10px;font-size:130px;color:#ffffff0b}
+.hero p{color:#b4d4c9;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:32px;margin-bottom:12px;max-width:450px}
+.hero button,.green{background:var(--green);color:#06251b;padding:13px 19px;border-radius:9px;font-weight:800;margin-top:13px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:30px}
+.card{background:var(--panel);border:1px solid #263247;border-radius:16px;padding:21px}
+.card small{color:var(--muted)}
+.card h2{font-size:25px;margin:12px 0 5px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin:28px 0 17px}
+.section-head span{color:var(--green);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.product{background:var(--panel);border:1px solid #263247;border-radius:16px;padding:22px;transition:.25s;cursor:pointer}
+.product:hover{transform:translateY(-5px);border-color:var(--green)}
+.icon{font-size:27px;margin-bottom:18px}
+.product h3{font-size:15px;margin-bottom:8px}
+.product p{font-size:12px;color:var(--muted);line-height:1.6}
+.product b{display:inline-block;color:var(--green);margin-top:17px;font-size:12px}
+.bottom{margin-top:35px;text-align:center;color:#63748b;font-size:11px;padding:20px}
+@media(max-width:850px){
+aside{width:70px;padding:20px 8px}
+.logo{font-size:13px;text-align:center}
+.logo span{display:block}
+.nav{font-size:0;text-align:center;padding:14px 5px}
+.nav::first-letter{font-size:18px}
+.nav-title{display:none}
+main{margin-left:70px;width:calc(100% - 70px);padding:20px 13px}
+.grid{grid-template-columns:repeat(2,1fr)}
+.stats{grid-template-columns:1fr}
+.hero h1{font-size:25px}
+}
+@media(max-width:430px){.grid{grid-template-columns:1fr}.search{width:60%}.profile .name{display:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+<div class="logo">PROMZY<span>MARKET.</span></div>
+<div class="nav-title">MENU</div>
+<button class="nav active">⌂ &nbsp; Dashboard</button>
+<button class="nav">◈ &nbsp; Airtime & Data</button>
+<button class="nav">▣ &nbsp; Gift Cards</button>
+<button class="nav">◇ &nbsp; Digital Products</button>
+<button class="nav">↗ &nbsp; Social Boosting</button>
+<button class="nav">🎮 &nbsp; Gaming</button>
+<button class="nav">◎ &nbsp; Web Services</button>
+<div class="nav-title">ACCOUNT</div>
+<button class="nav">▤ &nbsp; My Orders</button>
+<button class="nav">◉ &nbsp; Wallet</button>
+<button class="nav">⚙ &nbsp; Settings</button>
+</aside>
+
+<main>
+<div class="top">
+<input class="search" placeholder="⌕  Search products...">
+<div class="profile"><div class="avatar">P</div><span class="name">My Account</span></div>
+</div>
+
+<section class="hero">
+<p>WELCOME TO PROMZY MARKET</p>
+<h1>Your digital world, all in one place.</h1>
+<p>Discover digital products, gift cards, top-ups and more.</p>
+<button onclick="document.getElementById('services').scrollIntoView({behavior:'smooth'})">Explore marketplace →</button>
+</section>
+
+<div class="stats">
+<div class="card"><small>◉ WALLET BALANCE</small><h2>GH₵ 0.00</h2><small>Available balance</small></div>
+<div class="card"><small>▤ TOTAL ORDERS</small><h2>0</h2><small>Your purchases</small></div>
+<div class="card"><small>✦ ACCOUNT STATUS</small><h2 style="color:var(--green)">New member</h2><small>Welcome aboard</small></div>
+</div>
+
+<div class="section-head" id="services">
+<h2>Explore services</h2><span>VIEW ALL →</span>
+</div>
+
+<div class="grid">
+<div class="product"><div class="icon">📱</div><h3>Airtime & Data</h3><p>Mobile top-ups and data bundles.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">🎁</div><h3>Gift Cards</h3><p>Shop digital gift cards.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">💎</div><h3>Digital Products</h3><p>Templates, designs and downloads.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">🚀</div><h3>Social Promotion</h3><p>Social media advertising and promotion.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">🎮</div><h3>Gaming</h3><p>Gaming products and services.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">🌐</div><h3>Web Services</h3><p>Domains, hosting and website services.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">🎨</div><h3>Graphics & Design</h3><p>Creative digital assets.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">💻</div><h3>Software & Tools</h3><p>Authorized digital software products.</p><b>EXPLORE →</b></div>
+<div class="product"><div class="icon">📚</div><h3>Learning Resources</h3><p>Educational digital materials.</p><b>EXPLORE →</b></div>
+</div>
+
+<div class="bottom">© 2026 Promzy Market · Your Digital Marketplace</div>
+</main>
+</div>
+</body>
+  </html>
