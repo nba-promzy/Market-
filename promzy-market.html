@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090f1c">
+<title>Promzy Market</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#090f1c;--surface:#101a2b;--surface2:#152238;--line:rgba(255,255,255,.09);
+  --text:#f4f7fb;--muted:#91a0b5;--mint:#42e6ad;--mint-dark:#153f36;
+  --blue:#7da9ff;--danger:#ff8797;--shadow:0 24px 70px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button,input{font:inherit}button{cursor:pointer;border:0}
+.hidden{display:none!important}
+
+/* AUTH */
+#authScreen{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:
+ radial-gradient(circle at 18% 20%,rgba(66,230,173,.13),transparent 35%),
+ radial-gradient(circle at 85% 85%,rgba(87,132,255,.14),transparent 34%),#090f1c}
+.auth-story{padding:clamp(28px,6vw,82px);display:flex;flex-direction:column;justify-content:space-between;min-height:100vh}
+.brand{font-size:22px;font-weight:900;letter-spacing:-1px}.brand em{font-style:normal;color:var(--mint)}
+.story-content{max-width:570px;margin:auto 0}
+.eyebrow{color:var(--mint);font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:20px}
+.story-content h1{font-size:clamp(38px,5.2vw,70px);line-height:1.03;letter-spacing:-3px;margin-bottom:22px}
+.story-content h1 span{color:var(--mint)}
+.story-content p{max-width:440px;color:#a7b5c8;line-height:1.8;font-size:15px}
+.story-points{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
+.story-points span{border:1px solid var(--line);background:rgba(255,255,255,.035);padding:10px 13px;border-radius:30px;font-size:12px;color:#c4d0df}
+.auth-side{display:flex;align-items:center;justify-content:center;padding:25px}
+.auth-card{width:min(440px,100%);background:rgba(16,26,43,.9);border:1px solid var(--line);border-radius:25px;padding:clamp(25px,4vw,39px);box-shadow:var(--shadow);backdrop-filter:blur(16px)}
+.auth-card .brand{margin-bottom:32px;display:none}
+.auth-card h2{font-size:27px;letter-spacing:-.8px;margin-bottom:9px}
+.auth-hint{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:25px}
+.field-label{display:block;color:#c8d3e1;font-size:12px;font-weight:700;margin:14px 0 8px}
+.field{width:100%;padding:14px 15px;border:1px solid #2a3a50;background:#0b1422;color:white;border-radius:11px;outline:none;transition:.2s}
+.field:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(66,230,173,.1)}
+.field::placeholder{color:#65758b}
+.primary{width:100%;padding:15px;border-radius:11px;background:var(--mint);color:#06251b;font-weight:900;margin-top:21px;transition:.2s}
+.primary:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.auth-switch{text-align:center;color:var(--muted);font-size:13px;margin-top:22px}
+.text-button{background:none;color:var(--mint);font-weight:800;margin-left:5px}
+#authMessage{font-size:12px;line-height:1.6;margin-top:14px;min-height:18px}
+.auth-foot{font-size:11px;color:#66768d;margin-top:26px;text-align:center}
+
+/* APP SHELL */
+#appScreen{min-height:100vh}
+.topbar{height:76px;position:sticky;top:0;z-index:15;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px);background:rgba(9,15,28,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.top-left{display:flex;align-items:center;gap:17px}
+.menu-toggle{width:42px;height:42px;border-radius:12px;background:var(--surface2);color:white;font-size:20px;border:1px solid var(--line)}
+.top-brand{font-size:18px;font-weight:900;letter-spacing:-.7px}.top-brand em{font-style:normal;color:var(--mint)}
+.top-right{display:flex;align-items:center;gap:12px}
+.search-wrap{position:relative}
+.search{width:min(270px,30vw);padding:11px 14px 11px 37px;border-radius:11px;background:var(--surface);border:1px solid var(--line);color:white;outline:none}
+.search-icon{position:absolute;left:13px;top:10px;color:var(--muted)}
+.user-chip{display:flex;align-items:center;gap:9px;padding:6px 11px 6px 6px;border:1px solid var(--line);border-radius:30px;background:var(--surface);font-size:12px;color:#dce5f0}
+.avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#42e6ad,#5e9eff);color:#071a20;font-weight:900}
+.sidebar{position:fixed;z-index:25;top:0;bottom:0;left:0;width:285px;padding:25px 18px;background:#0d1727;border-right:1px solid var(--line);transform:translateX(-105%);transition:transform .28s ease;overflow-y:auto;box-shadow:var(--shadow)}
+.sidebar.open{transform:translateX(0)}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:0 5px 28px}
+.close-menu{background:var(--surface2);color:white;width:34px;height:34px;border-radius:10px;font-size:19px}
+.side-label{font-size:10px;color:#63758d;letter-spacing:2px;font-weight:800;margin:19px 10px 9px}
+.nav-item{width:100%;display:flex;align-items:center;gap:13px;padding:13px 12px;background:none;color:#aab8ca;text-align:left;border-radius:11px;margin:3px 0;font-size:13px;transition:.18s}
+.nav-item .nav-icon{width:23px;text-align:center;font-size:17px}
+.nav-item:hover,.nav-item.active{background:rgba(66,230,173,.11);color:var(--mint)}
+.nav-item.active{box-shadow:inset 3px 0 var(--mint)}
+.side-bottom{border-top:1px solid var(--line);margin-top:24px;padding-top:15px}
+.logout{width:100%;padding:13px;border-radius:11px;background:rgba(255,135,151,.1);color:var(--danger);font-weight:700;text-align:left}
+.scrim{position:fixed;z-index:20;inset:0;background:rgba(0,0,0,.58);opacity:0;visibility:hidden;transition:.25s}
+.scrim.show{opacity:1;visibility:visible}
+.main{max-width:1450px;margin:auto;padding:clamp(19px,4vw,45px)}
+.page{display:none;animation:fade .25s ease}.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-bottom:25px}
+.kicker{color:var(--mint);font-size:10px;letter-spacing:2px;font-weight:900;text-transform:uppercase;margin-bottom:9px}
+.page-heading h1{font-size:clamp(25px,3vw,34px);letter-spacing:-1.2px}
+.subtext{color:var(--muted);font-size:13px;line-height:1.7;margin-top:8px}
+.hero{position:relative;overflow:hidden;border:1px solid rgba(66,230,173,.18);border-radius:24px;padding:clamp(25px,4vw,43px);background:linear-gradient(112deg,#123e38 0%,#142b3b 56%,#1a2944 100%);margin-bottom:22px}
+.hero:after{content:"✦";position:absolute;right:7%;top:-35px;font-size:190px;color:rgba(255,255,255,.045);pointer-events:none}
+.hero-content{position:relative;z-index:1;max-width:590px}
+.hero-tag{display:inline-flex;padding:7px 11px;border-radius:30px;background:rgba(66,230,173,.12);color:var(--mint);font-size:10px;font-weight:900;letter-spacing:1.5px;margin-bottom:18px}
+.hero h1{font-size:clamp(29px,4vw,44px);line-height:1.08;letter-spacing:-1.7px;margin-bottom:13px}
+.hero p{color:#bfd2d0;font-size:13px;line-height:1.8;max-width:450px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}
+.hero-btn{padding:12px 16px;border-radius:10px;background:var(--mint);color:#06251b;font-weight:900;font-size:12px}
+.hero-btn.secondary{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);color:white}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 30px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:20px}
+.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px}
+.stat-icon{width:34px;height:34px;display:grid;place-items:center;background:rgba(66,230,173,.1);border-radius:10px;font-size:16px}
+.stat h2{font-size:25px;margin:14px 0 5px;letter-spacing:-.7px}
+.stat small{font-size:11px;color:var(--muted)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:29px 0 15px}
+.section-head h2{font-size:18px;letter-spacing:-.5px}
+.section-head span{color:var(--mint);font-size:11px;font-weight:800}
+.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.service-card{background:linear-gradient(145deg,#121f32,#101a2b);border:1px solid var(--line);border-radius:17px;padding:21px;cursor:pointer;transition:.2s;min-height:160px}
+.service-card:hover{transform:translateY(-3px);border-color:rgba(66,230,173,.5)}
+.service-icon{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;background:rgba(66,230,173,.1);font-size:21px;margin-bottom:18px}
+.service-card h3{font-size:14px;margin-bottom:7px}
+.service-card p{color:var(--muted);font-size:11px;line-height:1.6}
+.service-arrow{color:var(--mint);font-size:12px;font-weight:900;margin-top:14px;display:block}
+.content-panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:23px}
+.empty-state{padding:35px 15px;text-align:center}
+.empty-state .empty-icon{font-size:34px;margin-bottom:13px}
+.empty-state h3{font-size:16px;margin-bottom:8px}
+.empty-state p{font-size:12px;color:var(--muted);line-height:1.7}
+.data-row{padding:14px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:15px;font-size:13px}
+.data-row:last-child{border-bottom:0}
+.data-row span{color:var(--muted)}
+.notice{border:1px solid rgba(66,230,173,.2);background:rgba(66,230,173,.06);padding:14px;border-radius:12px;color:#b9d9ce;font-size:12px;line-height:1.6;margin-top:18px}
+.bottom{text-align:center;color:#5e6e84;font-size:10px;padding:35px 10px 15px}
+@media(max-width:850px){#authScreen{grid-template-columns:1fr}.auth-story{display:none}.auth-card .brand{display:block}.auth-side{min-height:100vh}.service-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.topbar{height:66px}.top-brand{font-size:16px}.search-wrap{display:none}.user-chip{padding:5px}.user-chip .user-name{display:none}.main{padding:20px 14px}.stats{grid-template-columns:1fr}.stat{padding:16px}.service-grid{grid-template-columns:1fr 1fr}.service-card{padding:16px;min-height:150px}.hero{border-radius:19px}.page-heading{align-items:flex-start;flex-direction:column}}
+@media(max-width:360px){.service-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<section id="authScreen">
+  <div class="auth-story">
+    <div class="brand">PROMZY<em>MARKET.</em></div>
+    <div class="story-content">
+      <div class="eyebrow">YOUR DIGITAL MARKETPLACE</div>
+      <h1>Everything digital.<br><span>One destination.</span></h1>
+      <p>Explore airtime and data, trusted gift cards, digital downloads, gaming, creative services and more — all from one account.</p>
+      <div class="story-points"><span>✦ Simple shopping</span><span>◈ One account</span><span>↗ Built for mobile</span></div>
+    </div>
+    <div style="color:#64748b;font-size:11px">© 2026 Promzy Market</div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-card">
+      <div class="brand">PROMZY<em>MARKET.</em></div>
+      <div class="eyebrow" id="authEyebrow">WELCOME BACK</div>
+      <h2 id="authTitle">Sign in to continue</h2>
+      <p class="auth-hint" id="authHint">Access your account and your marketplace dashboard.</p>
+      <form id="authForm">
+        <div id="signupFields" class="hidden">
+          <label class="field-label" for="username">Username</label>
+          <input class="field" id="username" placeholder="Choose a username" autocomplete="username">
+          <label class="field-label" for="phone">Phone number</label>
+          <input class="field" id="phone" type="tel" placeholder="e.g. 0241234567" autocomplete="tel">
+        </div>
+        <label class="field-label" for="email">Email address</label>
+        <input class="field" id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        <label class="field-label" for="password">Password</label>
+        <input class="field" id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required minlength="6">
+        <button class="primary" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <div id="authMessage" role="status"></div>
+      <div class="auth-switch"><span id="switchPrompt">New to Promzy Market?</span><button class="text-button" id="switchMode" type="button">Create account</button></div>
+      <div class="auth-foot">Your account is protected by Supabase authentication.</div>
+    </div>
+  </div>
+</section>
+
+<section id="appScreen" class="hidden">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head"><div class="brand">PROMZY<em>MARKET.</em></div><button class="close-menu" id="closeMenu" aria-label="Close menu">×</button></div>
+    <div class="side-label">MARKETPLACE</div>
+    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span>Dashboard</button>
+    <button class="nav-item" data-page="airtime"><span class="nav-icon">▣</span>Airtime & Data</button>
+    <button class="nav-item" data-page="gifts"><span class="nav-icon">◇</span>Gift Cards</button>
+    <button class="nav-item" data-page="digital"><span class="nav-icon">✧</span>Digital Products</button>
+    <button class="nav-item" data-page="boosting"><span class="nav-icon">↗</span>Social Boosting</button>
+    <button class="nav-item" data-page="gaming"><span class="nav-icon">🎮</span>Gaming</button>
+    <button class="nav-item" data-page="web"><span class="nav-icon">◎</span>Web Services</button>
+    <button class="nav-item" data-page="design"><span class="nav-icon">✎</span>Graphics & Design</button>
+    <button class="nav-item" data-page="software"><span class="nav-icon">⌘</span>Software & Tools</button>
+    <button class="nav-item" data-page="learning"><span class="nav-icon">▤</span>Learning Resources</button>
+    <div class="side-label">YOUR ACCOUNT</div>
+    <button class="nav-item" data-page="orders"><span class="nav-icon">▧</span>My Orders</button>
+    <button class="nav-item" data-page="wallet"><span class="nav-icon">◉</span>Wallet</button>
+    <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</button>
+    <div class="side-bottom"><button class="logout" id="logoutBtn">↪ &nbsp; Sign out</button></div>
+  </aside>
+
+  <header class="topbar">
+    <div class="top-left">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation">☰</button>
+      <div class="top-brand">PROMZY<em>MARKET.</em></div>
+    </div>
+    <div class="top-right">
+      <div class="search-wrap"><span class="search-icon">⌕</span><input class="search" id="searchInput" placeholder="Search marketplace"></div>
+      <div class="user-chip"><div class="avatar" id="avatar">P</div><span class="user-name" id="headerUsername">Customer</span></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="page active" id="page-dashboard">
+      <div class="hero">
+        <div class="hero-content">
+          <div class="hero-tag">✦ YOUR MARKETPLACE, YOUR WAY</div>
+          <h1 id="welcomeTitle">Welcome to your digital hub.</h1>
+          <p>Find the digital essentials you need, manage your orders and keep everything in one convenient place.</p>
+          <div class="hero-actions">
+            <button class="hero-btn" data-go="airtime">Explore marketplace&nbsp; →</button>
+            <button class="hero-btn secondary" data-go="wallet">View wallet</button>
+          </div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-top">WALLET BALANCE <span class="stat-icon">◉</span></div><h2 id="walletBalance">GH₵ 0.00</h2><small>Available balance</small></div>
+        <div class="stat"><div class="stat-top">TOTAL ORDERS <span class="stat-icon">▤</span></div><h2 id="orderCount">0</h2><small>Your purchases</small></div>
+        <div class="stat"><div class="stat-top">ACCOUNT STATUS <span class="stat-icon">✦</span></div><h2 style="color:var(--mint)">Active</h2><small>You're signed in</small></div>
+      </div>
+      <div class="section-head"><h2>Explore categories</h2><span>CHOOSE A CATEGORY</span></div>
+      <div class="service-grid">
+        <article class="service-card" data-go="airtime"><div class="service-icon">📱</div><h3>Airtime & Data</h3><p>Mobile top-ups and data bundles.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="gifts"><div class="service-icon">🎁</div><h3>Gift Cards</h3><p>Gift cards from legitimate suppliers.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="digital"><div class="service-icon">💎</div><h3>Digital Products</h3><p>Templates, downloads and digital goods.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="boosting"><div class="service-icon">🚀</div><h3>Social Boosting</h3><p>Promotion and marketing services.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="gaming"><div class="service-icon">🎮</div><h3>Gaming</h3><p>Gaming products and services.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="web"><div class="service-icon">🌐</div><h3>Web Services</h3><p>Domains, hosting and websites.</p><span class="service-arrow">EXPLORE →</span></article>
+      </div>
+    </section>
+
+    <section class="page" id="page-airtime" data-title="Airtime & Data"><div class="page-heading"><div><div class="kicker">MOBILE TOP-UPS</div><h1>Airtime & Data</h1><p class="subtext">Choose a network and bundle when supplier services are connected.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">📱</div><h3>Top-ups are coming soon</h3><p>We'll connect verified airtime and data suppliers here before enabling purchases.</p></div></section>
+    <section class="page" id="page-gifts" data-title="Gift Cards"><div class="page-heading"><div><div class="kicker">DIGITAL GIFTING</div><h1>Gift Cards</h1><p class="subtext">Browse gift cards sourced from legitimate suppliers.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">🎁</div><h3>Gift cards are coming soon</h3><p>Available cards, prices and delivery details will appear here after supplier setup.</p></div></section>
+    <section class="page" id="page-digital" data-title="Digital Products"><div class="page-heading"><div><div class="kicker">DOWNLOADS & TOOLS</div><h1>Digital Products</h1><p class="subtext">Useful digital downloads and resources.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">💎</div><h3>Digital products are coming soon</h3><p>Products and secure download delivery will be added here.</p></div></section>
+    <section class="page" id="page-boosting" data-title="Social Boosting"><div class="page-heading"><div><div class="kicker">SOCIAL PROMOTION</div><h1>Social Boosting</h1><p class="subtext">Explore legitimate social media promotion services.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">🚀</div><h3>Promotion services are coming soon</h3><p>Service options and clear order terms will appear here once configured.</p></div></section>
+    <section class="page" id="page-gaming" data-title="Gaming"><div class="page-heading"><div><div class="kicker">GAMING</div><h1>Gaming</h1><p class="subtext">Gaming-related digital products and services.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">🎮</div><h3>Gaming products are coming soon</h3><p>Gaming products will be listed here after setup.</p></div></section>
+    <section class="page" id="page-web" data-title="Web Services"><div class="page-heading"><div><div class="kicker">BUILD ONLINE</div><h1>Web Services</h1><p class="subtext">Domains, hosting and website-related services.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">🌐</div><h3>Web services are coming soon</h3><p>Service packages and details will be listed here.</p></div></section>
+    <section class="page" id="page-design" data-title="Graphics & Design"><div class="page-heading"><div><div class="kicker">CREATIVE ASSETS</div><h1>Graphics & Design</h1><p class="subtext">Creative resources and design services.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">🎨</div><h3>Design products are coming soon</h3><p>Design assets and services will be listed here.</p></div></section>
+    <section class="page" id="page-software" data-title="Software & Tools"><div class="page-heading"><div><div class="kicker">PRODUCTIVITY</div><h1>Software & Tools</h1><p class="subtext">Authorized software and useful digital tools.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">💻</div><h3>Software listings are coming soon</h3><p>Only authorized products and licenses will be listed here.</p></div></section>
+    <section class="page" id="page-learning" data-title="Learning Resources"><div class="page-heading"><div><div class="kicker">LEARN SOMETHING NEW</div><h1>Learning Resources</h1><p class="subtext">Educational materials and learning resources.</p></div></div><div class="content-panel empty-state"><div class="empty-icon">📚</div><h3>Learning resources are coming soon</h3><p>Educational downloads and resources will be listed here.</p></div></section>
+    <section class="page" id="page-orders" data-title="My Orders"><div class="page-heading"><div><div class="kicker">PURCHASE HISTORY</div><h1>My Orders</h1><p class="subtext">Keep track of your marketplace purchases.</p></div></div><div class="content-panel" id="ordersContent"><div class="empty-state"><div class="empty-icon">▤</div><h3>No orders yet</h3><p>Your orders will appear here after you make a purchase.</p></div></div></section>
+    <section class="page" id="page-wallet" data-title="Wallet"><div class="page-heading"><div><div class="kicker">YOUR FUNDS</div><h1>Wallet</h1><p class="subtext">View your current marketplace wallet balance.</p></div></div><div class="content-panel"><div class="kicker">AVAILABLE BALANCE</div><h2 id="walletPageBalance" style="font-size:34px;margin:10px 0">GH₵ 0.00</h2><p class="subtext">Wallet funding and withdrawals will be enabled after secure payment integration.</p><div class="notice">For safety, wallet balances must only be changed by a verified server-side payment process — never by editing the page.</div></div></section>
+    <section class="page" id="page-settings" data-title="Settings"><div class="page-heading"><div><div class="kicker">PROFILE</div><h1>Account Settings</h1><p class="subtext">Review the details connected to your account.</p></div></div><div class="content-panel"><div class="data-row"><span>Username</span><strong id="settingsUsername">—</strong></div><div class="data-row"><span>Email</span><strong id="settingsEmail">—</strong></div><div class="data-row"><span>Phone</span><strong id="settingsPhone">—</strong></div></div></section>
+    <div class="bottom">© 2026 Promzy Market · Your digital marketplace</div>
+  </main>
+</section>
+
+<script>
+/* Add your Supabase Project URL and publishable/anon key below.
+   Never place a service_role or secret key in browser code. */
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY";
+
+const configReady = !SUPABASE_URL.startsWith("PASTE_") && !SUPABASE_KEY.startsWith("PASTE_");
+const supabaseClient = configReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+let signupMode = false;
+let activeUser = null;
+
+const $ = id => document.getElementById(id);
+function authMessage(text,good=false){$("authMessage").textContent=text;$("authMessage").style.color=good?"var(--mint)":"var(--danger)";}
+function setAuthMode(signup){
+  signupMode=signup;
+  $("signupFields").classList.toggle("hidden",!signup);
+  $("authEyebrow").textContent=signup?"JOIN THE MARKETPLACE":"WELCOME BACK";
+  $("authTitle").textContent=signup?"Create your account":"Sign in to continue";
+  $("authHint").textContent=signup?"Set up your Promzy Market account in a few steps.":"Access your account and your marketplace dashboard.";
+  $("authSubmit").textContent=signup?"Create account":"Sign in";
+  $("switchPrompt").textContent=signup?"Already have an account?":"New to Promzy Market?";
+  $("switchMode").textContent=signup?"Sign in":"Create account";
+  $("password").autocomplete=signup?"new-password":"current-password";
+  authMessage("");
+}
+$("switchMode").addEventListener("click",()=>setAuthMode(!signupMode));
+
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!configReady){authMessage("Add your Supabase Project URL and Publishable Key in the script section first.");return;}
+  const email=$("email").value.trim();
+  const password=$("password").value;
+  $("authSubmit").disabled=true;$("authSubmit").textContent="Please wait…";
+  try{
+    if(signupMode){
+      const username=$("username").value.trim();
+      const phone=$("phone").value.trim();
+      if(!username||!phone)throw new Error("Please enter your username and phone number.");
+      if(password.length<6)throw new Error("Your password must be at least 6 characters.");
+      const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{username,phone}}});
+      if(error)throw error;
+      if(data.session){await openApp(data.user);}
+      else{authMessage("Account created. Check your email to confirm your address, then sign in.",true);setAuthMode(false);}
+    }else{
+      const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      await openApp(data.user);
+    }
+  }catch(err){authMessage(err.message||"Something went wrong. Please try again.");}
+  finally{$("authSubmit").disabled=false;$("authSubmit").textContent=signupMode?"Create account":"Sign in";}
+});
+
+function showAuth(){
+  $("appScreen").classList.add("hidden");$("authScreen").classList.remove("hidden");
+}
+async function openApp(user){
+  if(!user)return;
+  activeUser=user;
+  $("authScreen").classList.add("hidden");$("appScreen").classList.remove("hidden");
+  const metadata=user.user_metadata||{};
+  let profile=null;
+  const {data}=await supabaseClient.from("profiles").select("username,phone").eq("id",user.id).maybeSingle();
+  profile=data;
+  const name=profile?.username||metadata.username||"Customer";
+  $("headerUsername").textContent=name;
+  $("avatar").textContent=name.slice(0,1).toUpperCase();
+  $("welcomeTitle").textContent=`Welcome, ${name}.`;
+  $("settingsUsername").textContent=name;
+  $("settingsEmail").textContent=user.email||"—";
+  $("settingsPhone").textContent=profile?.phone||metadata.phone||"Not provided";
+  await Promise.all([loadWallet(user.id),loadOrders(user.id)]);
+}
+async function loadWallet(userId){
+  const {data,error}=await supabaseClient.from("wallets").select("balance").eq("user_id",userId).maybeSingle();
+  if(error){console.error("Wallet:",error.message);return;}
+  const amount=Number(data?.balance||0).toFixed(2);
+  $("walletBalance").textContent=`GH₵ ${amount}`;$("walletPageBalance").textContent=`GH₵ ${amount}`;
+}
+async function loadOrders(userId){
+  const {data,error}=await supabaseClient.from("orders").select("id,amount,status,created_at").eq("user_id",userId).order("created_at",{ascending:false});
+  if(error){console.error("Orders:",error.message);$("ordersContent").textContent="Could not load orders.";return;}
+  const rows=data||[];$("orderCount").textContent=rows.length;
+  if(!rows.length){$("ordersContent").innerHTML='<div class="empty-state"><div class="empty-icon">▤</div><h3>No orders yet</h3><p>Your orders will appear here after you make a purchase.</p></div>';return;}
+  $("ordersContent").innerHTML=rows.map(o=>`<div class="data-row"><strong>Order #${o.id}</strong><span>GH₵ ${Number(o.amount).toFixed(2)} · ${escapeHTML(o.status||"pending")}</span></div>`).join("");
+}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+function openMenu(){$("sidebar").classList.add("open");$("scrim").classList.add("show");}
+function closeMenu(){$("sidebar").classList.remove("open");$("scrim").classList.remove("show");}
+$("menuToggle").addEventListener("click",openMenu);
+$("closeMenu").addEventListener("click",closeMenu);
+$("scrim").addEventListener("click",closeMenu);
+
+function goToPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  const target=$("page-"+id);if(!target)return;
+  target.classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));
+  closeMenu();window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>goToPage(btn.dataset.page)));
+document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>goToPage(btn.dataset.go)));
+
+$("logoutBtn").addEventListener("click",async()=>{
+  if(supabaseClient)await supabaseClient.auth.signOut();
+  activeUser=null;showAuth();$("authForm").reset();setAuthMode(false);
+});
+
+$("searchInput").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  const q=e.target.value.toLowerCase().trim();
+  const match=[...document.querySelectorAll(".nav-item")].find(n=>n.textContent.toLowerCase().includes(q));
+  if(match){goToPage(match.dataset.page);e.target.value="";}
+});
+
+async function initialize(){
+  if(!configReady){showAuth();return;}
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error){console.error(error);showAuth();return;}
+  if(data.session)await openApp(data.session.user);else showAuth();
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    if(event==="SIGNED_OUT"){activeUser=null;showAuth();}
+    else if(event==="SIGNED_IN"&&session&&!activeUser){openApp(session.user);}
+  });
+}
+initialize();
+</script>
+</body>
+</html>
