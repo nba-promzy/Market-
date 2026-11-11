@@ -2,114 +2,1002 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Promzy Market</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#080e19;--panel:#111c2c;--green:#27df9b;--muted:#91a0b5}
-body{font-family:Inter,Arial,sans-serif;background:var(--bg);color:white;min-height:100vh}
-button{cursor:pointer;border:0}
-.layout{display:flex;min-height:100vh}
-aside{width:245px;background:#0d1625;border-right:1px solid #ffffff0d;padding:25px 17px;position:fixed;inset:0 auto 0 0}
-.logo{font-size:23px;font-weight:900;margin-bottom:45px;letter-spacing:-1px}
-.logo span{color:var(--green)}
-.nav-title{font-size:10px;color:#63748b;margin:25px 10px 12px;letter-spacing:2px}
-.nav{display:block;width:100%;text-align:left;padding:13px;border-radius:10px;color:#9eacc0;background:none;margin:4px 0;font-size:13px}
-.nav.active,.nav:hover{background:#1b302e;color:var(--green)}
-main{margin-left:245px;width:calc(100% - 245px);padding:30px 35px;max-width:1500px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:30px}
-.search{background:var(--panel);border:1px solid #263247;padding:13px 17px;border-radius:12px;color:white;width:45%;outline:none}
-.profile{display:flex;align-items:center;gap:12px;font-size:13px}
-.avatar{background:#174e40;color:var(--green);padding:12px;border-radius:50%}
-.hero{padding:35px;border-radius:22px;background:linear-gradient(115deg,#124c3e,#142d39 65%,#17263e);position:relative;overflow:hidden;margin-bottom:25px}
-.hero:after{content:"✦";position:absolute;right:50px;top:10px;font-size:130px;color:#ffffff0b}
-.hero p{color:#b4d4c9;font-size:13px;margin-bottom:12px}
-.hero h1{font-size:32px;margin-bottom:12px;max-width:450px}
-.hero button,.green{background:var(--green);color:#06251b;padding:13px 19px;border-radius:9px;font-weight:800;margin-top:13px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:30px}
-.card{background:var(--panel);border:1px solid #263247;border-radius:16px;padding:21px}
-.card small{color:var(--muted)}
-.card h2{font-size:25px;margin:12px 0 5px}
-.section-head{display:flex;justify-content:space-between;align-items:center;margin:28px 0 17px}
-.section-head span{color:var(--green);font-size:12px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
-.product{background:var(--panel);border:1px solid #263247;border-radius:16px;padding:22px;transition:.25s;cursor:pointer}
-.product:hover{transform:translateY(-5px);border-color:var(--green)}
-.icon{font-size:27px;margin-bottom:18px}
-.product h3{font-size:15px;margin-bottom:8px}
-.product p{font-size:12px;color:var(--muted);line-height:1.6}
-.product b{display:inline-block;color:var(--green);margin-top:17px;font-size:12px}
-.bottom{margin-top:35px;text-align:center;color:#63748b;font-size:11px;padding:20px}
-@media(max-width:850px){
-aside{width:70px;padding:20px 8px}
-.logo{font-size:13px;text-align:center}
-.logo span{display:block}
-.nav{font-size:0;text-align:center;padding:14px 5px}
-.nav::first-letter{font-size:18px}
-.nav-title{display:none}
-main{margin-left:70px;width:calc(100% - 70px);padding:20px 13px}
-.grid{grid-template-columns:repeat(2,1fr)}
-.stats{grid-template-columns:1fr}
-.hero h1{font-size:25px}
+
+:root{
+--bg:#080e19;
+--panel:#111c2c;
+--green:#27df9b;
+--muted:#91a0b5;
 }
-@media(max-width:430px){.grid{grid-template-columns:1fr}.search{width:60%}.profile .name{display:none}}
+
+body{
+background:var(--bg);
+color:white;
+font-family:Arial,sans-serif;
+min-height:100vh;
+}
+
+button{cursor:pointer;border:0}
+input{font:inherit}
+
+/* AUTH */
+
+#auth{
+min-height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:20px;
+background:radial-gradient(circle at top,#174536,#080e19 60%);
+}
+
+.auth-box{
+width:100%;
+max-width:420px;
+background:#111c2c;
+border:1px solid #ffffff15;
+padding:35px;
+border-radius:22px;
+box-shadow:0 20px 70px #0008;
+}
+
+.logo{
+font-size:27px;
+font-weight:900;
+margin-bottom:12px;
+}
+
+.logo span{color:var(--green)}
+
+.auth-sub{
+color:var(--muted);
+font-size:13px;
+margin-bottom:28px;
+line-height:1.6;
+}
+
+.auth-box h2{margin-bottom:10px}
+
+.auth-input{
+width:100%;
+padding:15px;
+margin:9px 0;
+background:#081321;
+border:1px solid #28384b;
+border-radius:10px;
+color:white;
+outline:none;
+}
+
+.auth-input:focus{border-color:var(--green)}
+
+.primary{
+width:100%;
+padding:15px;
+margin-top:15px;
+background:var(--green);
+color:#06251b;
+border-radius:10px;
+font-weight:bold;
+}
+
+.switch{
+text-align:center;
+margin-top:22px;
+color:var(--muted);
+font-size:13px;
+}
+
+.switch span{
+color:var(--green);
+cursor:pointer;
+font-weight:bold;
+}
+
+#authMessage{
+font-size:13px;
+margin-top:15px;
+line-height:1.6;
+}
+
+/* APP */
+
+#app{display:none}
+
+.sidebar{
+position:fixed;
+left:-280px;
+top:0;
+bottom:0;
+width:260px;
+background:#0d1625;
+padding:25px 17px;
+z-index:20;
+transition:.3s;
+overflow-y:auto;
+border-right:1px solid #ffffff12;
+}
+
+.sidebar.open{left:0}
+
+.menu-logo{
+font-size:23px;
+font-weight:900;
+margin-bottom:35px;
+}
+
+.menu-logo span{color:var(--green)}
+
+.nav-title{
+font-size:10px;
+color:#718197;
+letter-spacing:2px;
+margin:22px 10px 10px;
+}
+
+.nav{
+display:block;
+width:100%;
+text-align:left;
+padding:14px;
+background:none;
+color:#a8b5c7;
+border-radius:10px;
+margin:3px 0;
+font-size:13px;
+}
+
+.nav:hover,.nav.active{
+background:#19332e;
+color:var(--green);
+}
+
+.overlay{
+display:none;
+position:fixed;
+inset:0;
+background:#0009;
+z-index:15;
+}
+
+.overlay.show{display:block}
+
+main{
+min-height:100vh;
+}
+
+header{
+height:75px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 25px;
+border-bottom:1px solid #ffffff12;
+background:#0b1422;
+position:sticky;
+top:0;
+z-index:10;
+}
+
+.header-left{
+display:flex;
+align-items:center;
+gap:18px;
+}
+
+.menu-btn{
+background:#192638;
+color:white;
+padding:11px 15px;
+border-radius:9px;
+font-size:20px;
+}
+
+.profile{
+display:flex;
+align-items:center;
+gap:10px;
+font-size:13px;
+}
+
+.avatar{
+width:36px;
+height:36px;
+border-radius:50%;
+background:#174e40;
+color:var(--green);
+display:grid;
+place-items:center;
+font-weight:bold;
+}
+
+.content{
+padding:30px;
+max-width:1400px;
+margin:auto;
+}
+
+.page{display:none}
+.page.active{display:block}
+
+.hero{
+padding:35px;
+background:linear-gradient(120deg,#124c3e,#17263e);
+border-radius:20px;
+margin-bottom:25px;
+}
+
+.hero p{
+color:#b4d4c9;
+font-size:13px;
+margin-bottom:12px;
+}
+
+.hero h1{
+font-size:30px;
+margin-bottom:12px;
+}
+
+.hero button{
+background:var(--green);
+color:#06251b;
+padding:13px 18px;
+border-radius:9px;
+font-weight:bold;
+margin-top:15px;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+margin:25px 0;
+}
+
+.card,.product{
+background:var(--panel);
+border:1px solid #263247;
+border-radius:15px;
+padding:22px;
+}
+
+.card small{color:var(--muted)}
+.card h2{margin:13px 0}
+
+.section-title{
+margin:30px 0 18px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:15px;
+}
+
+.product{
+cursor:pointer;
+transition:.2s;
+}
+
+.product:hover{
+border-color:var(--green);
+transform:translateY(-3px);
+}
+
+.icon{
+font-size:30px;
+margin-bottom:18px;
+}
+
+.product h3{margin-bottom:9px}
+
+.product p{
+font-size:12px;
+color:var(--muted);
+line-height:1.6;
+}
+
+.green-text{
+color:var(--green);
+}
+
+.page-description{
+color:var(--muted);
+margin:12px 0 25px;
+font-size:14px;
+line-height:1.6;
+}
+
+.logout{
+width:100%;
+padding:13px;
+background:#3a2029;
+color:#ff8b9b;
+border-radius:10px;
+margin-top:20px;
+}
+
+.bottom{
+text-align:center;
+padding:30px;
+color:#718197;
+font-size:11px;
+}
+
+@media(max-width:700px){
+.content{padding:18px 13px}
+.stats{grid-template-columns:1fr}
+.grid{grid-template-columns:repeat(2,1fr)}
+.hero{padding:25px}
+.hero h1{font-size:24px}
+header{padding:0 13px}
+}
+
+@media(max-width:420px){
+.grid{grid-template-columns:1fr}
+.profile .username{display:none}
+.auth-box{padding:25px}
+}
 </style>
 </head>
-<body>
-<div class="layout">
-<aside>
-<div class="logo">PROMZY<span>MARKET.</span></div>
-<div class="nav-title">MENU</div>
-<button class="nav active">⌂ &nbsp; Dashboard</button>
-<button class="nav">◈ &nbsp; Airtime & Data</button>
-<button class="nav">▣ &nbsp; Gift Cards</button>
-<button class="nav">◇ &nbsp; Digital Products</button>
-<button class="nav">↗ &nbsp; Social Boosting</button>
-<button class="nav">🎮 &nbsp; Gaming</button>
-<button class="nav">◎ &nbsp; Web Services</button>
-<div class="nav-title">ACCOUNT</div>
-<button class="nav">▤ &nbsp; My Orders</button>
-<button class="nav">◉ &nbsp; Wallet</button>
-<button class="nav">⚙ &nbsp; Settings</button>
-</aside>
 
-<main>
-<div class="top">
-<input class="search" placeholder="⌕  Search products...">
-<div class="profile"><div class="avatar">P</div><span class="name">My Account</span></div>
+<body>
+
+<!-- AUTHENTICATION -->
+
+<section id="auth">
+<div class="auth-box">
+
+<div class="logo">PROMZY<span>MARKET.</span></div>
+
+<h2 id="authTitle">Welcome back 👋</h2>
+
+<p class="auth-sub" id="authSub">
+Login to access your digital marketplace.
+</p>
+
+<form id="authForm">
+
+<div id="signupFields" style="display:none">
+<input class="auth-input" id="username"
+placeholder="Choose username">
+
+<input class="auth-input" id="phone"
+placeholder="Phone number">
 </div>
 
-<section class="hero">
-<p>WELCOME TO PROMZY MARKET</p>
-<h1>Your digital world, all in one place.</h1>
-<p>Discover digital products, gift cards, top-ups and more.</p>
-<button onclick="document.getElementById('services').scrollIntoView({behavior:'smooth'})">Explore marketplace →</button>
+<input class="auth-input" id="email"
+type="email" placeholder="Email address" required>
+
+<input class="auth-input" id="password"
+type="password" placeholder="Password" required>
+
+<button class="primary" id="authButton">
+Login to your account
+</button>
+
+</form>
+
+<div id="authMessage"></div>
+
+<div class="switch">
+<span id="switchText">Don't have an account? </span>
+<span onclick="toggleAuth()" id="switchButton">
+Create account
+</span>
+</div>
+
+</div>
 </section>
 
-<div class="stats">
-<div class="card"><small>◉ WALLET BALANCE</small><h2>GH₵ 0.00</h2><small>Available balance</small></div>
-<div class="card"><small>▤ TOTAL ORDERS</small><h2>0</h2><small>Your purchases</small></div>
-<div class="card"><small>✦ ACCOUNT STATUS</small><h2 style="color:var(--green)">New member</h2><small>Welcome aboard</small></div>
+
+<!-- MAIN APPLICATION -->
+
+<div id="app">
+
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<aside class="sidebar" id="sidebar">
+
+<div class="menu-logo">PROMZY<span>MARKET.</span></div>
+
+<div class="nav-title">MAIN MENU</div>
+
+<button class="nav active" onclick="showPage('dashboard',this)">
+⌂ &nbsp; Dashboard
+</button>
+
+<button class="nav" onclick="showPage('airtime',this)">
+📱 &nbsp; Airtime & Data
+</button>
+
+<button class="nav" onclick="showPage('gifts',this)">
+🎁 &nbsp; Gift Cards
+</button>
+
+<button class="nav" onclick="showPage('digital',this)">
+💎 &nbsp; Digital Products
+</button>
+
+<button class="nav" onclick="showPage('boosting',this)">
+🚀 &nbsp; Social Boosting
+</button>
+
+<button class="nav" onclick="showPage('gaming',this)">
+🎮 &nbsp; Gaming
+</button>
+
+<button class="nav" onclick="showPage('web',this)">
+🌐 &nbsp; Web Services
+</button>
+
+<button class="nav" onclick="showPage('design',this)">
+🎨 &nbsp; Graphics & Design
+</button>
+
+<button class="nav" onclick="showPage('software',this)">
+💻 &nbsp; Software & Tools
+</button>
+
+<button class="nav" onclick="showPage('learning',this)">
+📚 &nbsp; Learning Resources
+</button>
+
+<div class="nav-title">MY ACCOUNT</div>
+
+<button class="nav" onclick="showPage('orders',this)">
+▤ &nbsp; My Orders
+</button>
+
+<button class="nav" onclick="showPage('wallet',this)">
+◉ &nbsp; My Wallet
+</button>
+
+<button class="nav" onclick="showPage('settings',this)">
+⚙ &nbsp; Settings
+</button>
+
+<button class="logout" onclick="logout()">
+Logout
+</button>
+
+</aside>
+
+
+<main>
+
+<header>
+
+<div class="header-left">
+<button class="menu-btn" onclick="toggleMenu()">☰</button>
+<strong id="pageTitle">Dashboard</strong>
 </div>
 
-<div class="section-head" id="services">
-<h2>Explore services</h2><span>VIEW ALL →</span>
+<div class="profile">
+<div class="avatar" id="avatar">P</div>
+<span class="username" id="headerUsername">Account</span>
 </div>
+
+</header>
+
+
+<div class="content">
+
+<!-- DASHBOARD -->
+
+<section class="page active" id="dashboard">
+
+<div class="hero">
+<p>WELCOME TO PROMZY MARKET</p>
+<h1>Your digital world, all in one place.</h1>
+<p>Discover products, top-ups, gift cards and more.</p>
+<button onclick="showPage('airtime')">
+Explore marketplace →
+</button>
+</div>
+
+<div class="stats">
+
+<div class="card">
+<small>WALLET BALANCE</small>
+<h2 id="walletBalance">GH₵ 0.00</h2>
+<small>Available balance</small>
+</div>
+
+<div class="card">
+<small>TOTAL ORDERS</small>
+<h2 id="orderCount">0</h2>
+<small>Your purchases</small>
+</div>
+
+<div class="card">
+<small>ACCOUNT STATUS</small>
+<h2 class="green-text">Active</h2>
+<small>Welcome aboard</small>
+</div>
+
+</div>
+
+<h2 class="section-title">Explore services</h2>
 
 <div class="grid">
-<div class="product"><div class="icon">📱</div><h3>Airtime & Data</h3><p>Mobile top-ups and data bundles.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">🎁</div><h3>Gift Cards</h3><p>Shop digital gift cards.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">💎</div><h3>Digital Products</h3><p>Templates, designs and downloads.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">🚀</div><h3>Social Promotion</h3><p>Social media advertising and promotion.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">🎮</div><h3>Gaming</h3><p>Gaming products and services.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">🌐</div><h3>Web Services</h3><p>Domains, hosting and website services.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">🎨</div><h3>Graphics & Design</h3><p>Creative digital assets.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">💻</div><h3>Software & Tools</h3><p>Authorized digital software products.</p><b>EXPLORE →</b></div>
-<div class="product"><div class="icon">📚</div><h3>Learning Resources</h3><p>Educational digital materials.</p><b>EXPLORE →</b></div>
+
+<div class="product" onclick="showPage('airtime')">
+<div class="icon">📱</div>
+<h3>Airtime & Data</h3>
+<p>Mobile top-ups and data bundles.</p>
 </div>
 
-<div class="bottom">© 2026 Promzy Market · Your Digital Marketplace</div>
+<div class="product" onclick="showPage('gifts')">
+<div class="icon">🎁</div>
+<h3>Gift Cards</h3>
+<p>Digital gift cards from legitimate suppliers.</p>
+</div>
+
+<div class="product" onclick="showPage('digital')">
+<div class="icon">💎</div>
+<h3>Digital Products</h3>
+<p>Templates, designs and downloads.</p>
+</div>
+
+<div class="product" onclick="showPage('boosting')">
+<div class="icon">🚀</div>
+<h3>Social Boosting</h3>
+<p>Social media promotion services.</p>
+</div>
+
+<div class="product" onclick="showPage('gaming')">
+<div class="icon">🎮</div>
+<h3>Gaming</h3>
+<p>Gaming products and services.</p>
+</div>
+
+<div class="product" onclick="showPage('web')">
+<div class="icon">🌐</div>
+<h3>Web Services</h3>
+<p>Domains, hosting and websites.</p>
+</div>
+
+</div>
+</section>
+
+
+<!-- CATEGORY PAGES -->
+
+<section class="page" id="airtime">
+<h1>Airtime & Data 📱</h1>
+<p class="page-description">Purchase mobile airtime and data bundles.</p>
+<div class="card">Products will appear here when we connect our suppliers.</div>
+</section>
+
+<section class="page" id="gifts">
+<h1>Gift Cards 🎁</h1>
+<p class="page-description">Explore gift cards from legitimate suppliers.</p>
+<div class="card">Gift cards will appear here.</div>
+</section>
+
+<section class="page" id="digital">
+<h1>Digital Products 💎</h1>
+<p class="page-description">Discover useful digital products and downloads.</p>
+<div class="card">Digital products will appear here.</div>
+</section>
+
+<section class="page" id="boosting">
+<h1>Social Boosting 🚀</h1>
+<p class="page-description">Explore social media promotion services.</p>
+<div class="card">Promotion services will appear here.</div>
+</section>
+
+<section class="page" id="gaming">
+<h1>Gaming 🎮</h1>
+<p class="page-description">Gaming products and services.</p>
+<div class="card">Gaming products will appear here.</div>
+</section>
+
+<section class="page" id="web">
+<h1>Web Services 🌐</h1>
+<p class="page-description">Domains, hosting and website services.</p>
+<div class="card">Web services will appear here.</div>
+</section>
+
+<section class="page" id="design">
+<h1>Graphics & Design 🎨</h1>
+<p class="page-description">Explore creative digital assets.</p>
+<div class="card">Design products will appear here.</div>
+</section>
+
+<section class="page" id="software">
+<h1>Software & Tools 💻</h1>
+<p class="page-description">Authorized software and digital tools.</p>
+<div class="card">Software products will appear here.</div>
+</section>
+
+<section class="page" id="learning">
+<h1>Learning Resources 📚</h1>
+<p class="page-description">Educational materials and resources.</p>
+<div class="card">Learning resources will appear here.</div>
+</section>
+
+<section class="page" id="orders">
+<h1>My Orders ▤</h1>
+<p class="page-description">View your purchase history.</p>
+<div class="card" id="ordersContent">Loading orders...</div>
+</section>
+
+<section class="page" id="wallet">
+<h1>My Wallet ◉</h1>
+<p class="page-description">Your marketplace wallet.</p>
+<div class="card">
+<small>AVAILABLE BALANCE</small>
+<h2 id="walletPageBalance">GH₵ 0.00</h2>
+<p class="page-description">Your wallet balance is securely stored.</p>
+</div>
+</section>
+
+<section class="page" id="settings">
+<h1>Account Settings ⚙</h1>
+<p class="page-description">Your account information.</p>
+<div class="card">
+<p>Username: <strong id="settingsUsername"></strong></p>
+<br>
+<p>Email: <strong id="settingsEmail"></strong></p>
+<br>
+<p>Phone: <strong id="settingsPhone"></strong></p>
+</div>
+</section>
+
+</div>
+
+<div class="bottom">
+© 2026 Promzy Market · Your Digital Marketplace
+</div>
+
 </main>
 </div>
+
+
+<script>
+
+// SUPABASE CONNECTION
+
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY";
+
+const db = window.supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
+
+let signupMode = false;
+
+
+// LOGIN / SIGNUP SWITCH
+
+function toggleAuth(){
+
+signupMode = !signupMode;
+
+document.getElementById("signupFields").style.display =
+signupMode ? "block" : "none";
+
+document.getElementById("authTitle").textContent =
+signupMode ? "Create your account" : "Welcome back 👋";
+
+document.getElementById("authSub").textContent =
+signupMode ? "Join Promzy Market today." :
+"Login to access your digital marketplace.";
+
+document.getElementById("authButton").textContent =
+signupMode ? "Create account" : "Login to your account";
+
+document.getElementById("switchText").textContent =
+signupMode ? "Already have an account? " :
+"Don't have an account? ";
+
+document.getElementById("switchButton").textContent =
+signupMode ? "Login" : "Create account";
+
+document.getElementById("authMessage").textContent = "";
+
+}
+
+
+// AUTHENTICATION
+
+document.getElementById("authForm").addEventListener(
+"submit", async function(e){
+
+e.preventDefault();
+
+const message = document.getElementById("authMessage");
+const email = document.getElementById("email").value.trim();
+const password = document.getElementById("password").value;
+
+message.textContent = "Please wait...";
+message.style.color = "white";
+
+try{
+
+if(signupMode){
+
+const username = document.getElementById("username").value.trim();
+const phone = document.getElementById("phone").value.trim();
+
+if(!username || !phone){
+throw new Error("Enter your username and phone number.");
+}
+
+const {data,error} = await db.auth.signUp({
+
+email:email,
+password:password,
+
+options:{
+data:{
+username:username,
+phone:phone
+}
+}
+
+});
+
+if(error) throw error;
+
+if(data.session){
+
+message.textContent = "Account created successfully!";
+await openApp(data.session.user);
+
+}else{
+
+message.style.color = "var(--green)";
+message.textContent =
+"Account created! Check your email to confirm your account, then log in.";
+
+}
+
+}else{
+
+const {data,error} = await db.auth.signInWithPassword({
+email:email,
+password:password
+});
+
+if(error) throw error;
+
+await openApp(data.user);
+
+}
+
+}catch(error){
+
+message.style.color = "#ff7b8b";
+message.textContent = error.message;
+
+}
+
+});
+
+
+// OPEN APP
+
+async function openApp(user){
+
+document.getElementById("auth").style.display = "none";
+document.getElementById("app").style.display = "block";
+
+const {data:profile} = await db
+.from("profiles")
+.select("*")
+.eq("id",user.id)
+.maybeSingle();
+
+const username =
+profile?.username ||
+user.user_metadata?.username ||
+"Customer";
+
+document.getElementById("headerUsername").textContent = username;
+document.getElementById("avatar").textContent =
+username.charAt(0).toUpperCase();
+
+document.getElementById("settingsUsername").textContent = username;
+document.getElementById("settingsEmail").textContent = user.email;
+document.getElementById("settingsPhone").textContent =
+profile?.phone || user.user_metadata?.phone || "Not provided";
+
+await loadWallet(user.id);
+await loadOrders(user.id);
+
+}
+
+
+// WALLET
+
+async function loadWallet(userId){
+
+const {data,error} = await db
+.from("wallets")
+.select("balance")
+.eq("user_id",userId)
+.maybeSingle();
+
+if(error){
+console.error(error);
+return;
+}
+
+const balance = Number(data?.balance || 0).toFixed(2);
+
+document.getElementById("walletBalance").textContent =
+"GH₵ " + balance;
+
+document.getElementById("walletPageBalance").textContent =
+"GH₵ " + balance;
+
+}
+
+
+// ORDERS
+
+async function loadOrders(userId){
+
+const {data,error} = await db
+.from("orders")
+.select("*")
+.eq("user_id",userId);
+
+if(error){
+console.error(error);
+return;
+}
+
+document.getElementById("orderCount").textContent =
+data.length;
+
+const area = document.getElementById("ordersContent");
+
+if(!data.length){
+
+area.textContent = "You haven't placed any orders yet.";
+
+}else{
+
+area.innerHTML = data.map(order=>`
+<div style="padding:14px 0;border-bottom:1px solid #ffffff15">
+<strong>Order #${order.id}</strong>
+<p style="color:#91a0b5;margin-top:8px">
+GH₵ ${Number(order.amount).toFixed(2)} · ${order.status}
+</p>
+</div>
+`).join("");
+
+}
+
+}
+
+
+// MENU
+
+function toggleMenu(){
+
+document.getElementById("sidebar").classList.toggle("open");
+document.getElementById("overlay").classList.toggle("show");
+
+}
+
+
+// NAVIGATION
+
+function showPage(id,button){
+
+document.querySelectorAll(".page").forEach(page=>{
+page.classList.remove("active");
+});
+
+document.getElementById(id).classList.add("active");
+
+document.querySelectorAll(".nav").forEach(nav=>{
+nav.classList.remove("active");
+});
+
+if(button) button.classList.add("active");
+
+const titles = {
+dashboard:"Dashboard",
+airtime:"Airtime & Data",
+gifts:"Gift Cards",
+digital:"Digital Products",
+boosting:"Social Boosting",
+gaming:"Gaming",
+web:"Web Services",
+design:"Graphics & Design",
+software:"Software & Tools",
+learning:"Learning Resources",
+orders:"My Orders",
+wallet:"My Wallet",
+settings:"Settings"
+};
+
+document.getElementById("pageTitle").textContent =
+titles[id] || "Promzy Market";
+
+document.getElementById("sidebar").classList.remove("open");
+document.getElementById("overlay").classList.remove("show");
+
+window.scrollTo(0,0);
+
+}
+
+
+// LOGOUT
+
+async function logout(){
+
+await db.auth.signOut();
+
+document.getElementById("app").style.display = "none";
+document.getElementById("auth").style.display = "flex";
+
+document.getElementById("authForm").reset();
+
+signupMode = false;
+
+document.getElementById("signupFields").style.display = "none";
+document.getElementById("authTitle").textContent = "Welcome back 👋";
+document.getElementById("authButton").textContent = "Login to your account";
+document.getElementById("switchText").textContent = "Don't have an account? ";
+document.getElementById("switchButton").textContent = "Create account";
+
+}
+
+
+// CHECK EXISTING SESSION
+
+db.auth.onAuthStateChange((event,session)=>{
+
+if(event === "SIGNED_IN" && session){
+
+openApp(session.user);
+
+}
+
+if(event === "SIGNED_OUT"){
+
+document.getElementById("app").style.display = "none";
+document.getElementById("auth").style.display = "flex";
+
+}
+
+});
+
+async function checkSession(){
+
+const {data,error} = await db.auth.getSession();
+
+if(error){
+console.error(error);
+return;
+}
+
+if(data.session){
+
+await openApp(data.session.user);
+
+}
+
+}
+
+checkSession();
+
+</script>
+
 </body>
-  </html>
+                     </html>
