@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090f1c">
+<title>Promzy Market</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{
+  --bg:#090f1c;--surface:#101a2b;--surface2:#152238;--line:rgba(255,255,255,.09);
+  --text:#f4f7fb;--muted:#91a0b5;--mint:#42e6ad;--mint-dark:#153f36;
+  --blue:#7da9ff;--danger:#ff8797;--gold:#ffd27a;--shadow:0 24px 70px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
+.hidden{display:none!important}
+
+/* ---------- AUTH ---------- */
+#authScreen{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;position:relative;overflow:hidden;background:#090f1c}
+.auth-story{position:relative;overflow:hidden;padding:clamp(28px,6vw,82px);display:flex;flex-direction:column;justify-content:space-between;min-height:100vh;isolation:isolate}
+.aurora{position:absolute;border-radius:50%;filter:blur(80px);opacity:.45;pointer-events:none;z-index:-1;animation:drift 16s ease-in-out infinite}
+.aurora.a{width:520px;height:520px;background:#42e6ad;top:-160px;left:-120px}
+.aurora.b{width:460px;height:460px;background:#5784ff;bottom:-150px;right:-120px;animation-delay:-7s}
+.aurora.c{width:300px;height:300px;background:#ffd27a;top:40%;left:45%;opacity:.12;animation-delay:-3s}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(50px,-30px) scale(1.1)}66%{transform:translate(-30px,40px) scale(.95)}}
+.grid-lines{position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);-webkit-mask-image:radial-gradient(ellipse at center,#000 30%,transparent 75%);animation:gridmove 22s linear infinite}
+@keyframes gridmove{to{background-position:56px 56px}}
+.reveal{opacity:0;transform:translateY(22px);animation:up .85s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes up{to{opacity:1;transform:none}}
+.brand{font-size:22px;font-weight:900;letter-spacing:-1px}.brand em{font-style:normal;color:var(--mint)}
+.story-content{max-width:570px;margin:auto 0}
+.eyebrow{color:var(--mint);font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:20px}
+.story-content h1{font-size:clamp(38px,5.2vw,72px);line-height:1.03;letter-spacing:-3px;margin-bottom:22px}
+.story-content h1 span{display:inline-block}
+.story-content h1 .accent{background:linear-gradient(90deg,#42e6ad,#7da9ff,#42e6ad);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:up .85s .55s cubic-bezier(.2,.7,.2,1) forwards,sheen 4s linear 1.4s infinite;opacity:0}
+@keyframes sheen{to{background-position:200% center}}
+.story-content p{max-width:440px;color:#a7b5c8;line-height:1.8;font-size:15px}
+.story-points{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
+.story-points span{border:1px solid var(--line);background:rgba(255,255,255,.04);backdrop-filter:blur(8px);padding:10px 13px;border-radius:30px;font-size:12px;color:#c4d0df}
+.float-chip{position:absolute;z-index:1;padding:10px 14px;border-radius:14px;background:rgba(16,26,43,.6);border:1px solid var(--line);font-size:12px;color:#dce5f0;backdrop-filter:blur(12px);box-shadow:0 14px 34px rgba(0,0,0,.3);animation:bob 6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.scene3d{position:absolute;top:0;bottom:0;right:-4%;width:62%;z-index:1;pointer-events:none}
+.scene3d canvas{width:100%!important;height:100%!important;display:block}
+.auth-story .brand,.story-content,.auth-foot-left{position:relative;z-index:2}
+.product-grid{perspective:900px}
+.product.tilt{transition:transform .12s ease-out,border-color .25s,box-shadow .25s}
+.auth-foot-left{color:#64748b;font-size:11px}
+.auth-side{display:flex;align-items:center;justify-content:center;padding:25px;position:relative;z-index:1}
+.auth-card{width:min(440px,100%);background:rgba(16,26,43,.72);border:1px solid var(--line);border-radius:25px;padding:clamp(25px,4vw,39px);box-shadow:var(--shadow);backdrop-filter:blur(20px);position:relative;overflow:hidden}
+.auth-card::before{content:"";position:absolute;inset:-1px;border-radius:25px;padding:1px;background:linear-gradient(130deg,rgba(66,230,173,.6),transparent 35%,transparent 65%,rgba(125,169,255,.5));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.auth-card .brand{margin-bottom:30px;display:none}
+.auth-card .eyebrow{margin-bottom:12px}
+.auth-card h2{font-size:27px;letter-spacing:-.8px;margin-bottom:9px}
+.auth-hint{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:22px}
+.field-label{display:block;color:#c8d3e1;font-size:12px;font-weight:700;margin:14px 0 8px}
+.field{width:100%;padding:14px 15px;border:1px solid #2a3a50;background:#0b1422;color:white;border-radius:12px;outline:none;transition:.2s}
+.field:focus{border-color:var(--mint);box-shadow:0 0 0 3px rgba(66,230,173,.12)}
+.field::placeholder{color:#65758b}
+select.field{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+textarea.field{resize:vertical}
+.primary{position:relative;overflow:hidden;width:100%;padding:15px;border-radius:12px;background:var(--mint);color:#06251b;font-weight:900;margin-top:21px;transition:.2s}
+.primary::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-20deg);animation:shine 3.4s infinite}
+@keyframes shine{0%{left:-60%}55%,100%{left:130%}}
+.primary:hover{filter:brightness(1.06);transform:translateY(-2px);box-shadow:0 12px 28px rgba(66,230,173,.25)}
+.primary:disabled{opacity:.6;cursor:wait}
+.primary:disabled::after{animation:none}
+.auth-switch{text-align:center;color:var(--muted);font-size:13px;margin-top:22px}
+.text-button{background:none;color:var(--mint);font-weight:800;margin-left:5px}
+#authMessage{font-size:12px;line-height:1.6;margin-top:14px;min-height:18px}
+.auth-foot{font-size:11px;color:#66768d;margin-top:22px;text-align:center}
+
+/* ---------- APP SHELL ---------- */
+#appScreen{min-height:100vh}
+.topbar{height:76px;position:sticky;top:0;z-index:15;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,48px);background:rgba(9,15,28,.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.top-brand{font-size:18px;font-weight:900;letter-spacing:-.7px}.top-brand em{font-style:normal;color:var(--mint)}
+.top-right{display:flex;align-items:center;gap:12px}
+.search-wrap{position:relative}
+.search{width:min(260px,28vw);padding:11px 14px 11px 37px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:white;outline:none;transition:.2s}
+.search:focus{border-color:rgba(66,230,173,.5)}
+.search-icon{position:absolute;left:13px;top:10px;color:var(--muted)}
+.user-chip{display:flex;align-items:center;gap:9px;padding:6px 11px 6px 6px;border:1px solid var(--line);border-radius:30px;background:var(--surface);font-size:12px;color:#dce5f0}
+.avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#42e6ad,#5e9eff);color:#071a20;font-weight:900}
+.menu-toggle{width:42px;height:42px;border-radius:12px;background:var(--surface2);color:white;font-size:20px;border:1px solid var(--line);transition:.2s}
+.menu-toggle:hover{border-color:rgba(66,230,173,.5);color:var(--mint)}
+
+/* Side menu slides in from the RIGHT */
+.sidebar{position:fixed;z-index:25;top:0;bottom:0;right:0;left:auto;width:300px;max-width:88vw;padding:25px 18px;background:#0d1727;border-left:1px solid var(--line);transform:translateX(105%);transition:transform .32s cubic-bezier(.2,.7,.2,1);overflow-y:auto;box-shadow:var(--shadow)}
+.sidebar.open{transform:translateX(0)}
+.side-head{display:flex;align-items:center;justify-content:space-between;padding:0 5px 24px}
+.close-menu{background:var(--surface2);color:white;width:34px;height:34px;border-radius:10px;font-size:19px}
+.side-label{font-size:10px;color:#63758d;letter-spacing:2px;font-weight:800;margin:19px 10px 9px}
+.nav-item{width:100%;display:flex;align-items:center;gap:13px;padding:12px 12px;background:none;color:#aab8ca;text-align:left;border-radius:11px;margin:3px 0;font-size:13px;transition:.18s}
+.nav-item .nav-icon{width:23px;text-align:center;font-size:16px}
+.nav-item:hover,.nav-item.active{background:rgba(66,230,173,.1);color:var(--mint)}
+.nav-item.active{box-shadow:inset -3px 0 var(--mint)}
+.side-bottom{border-top:1px solid var(--line);margin-top:24px;padding-top:15px}
+.logout{width:100%;padding:13px;border-radius:11px;background:rgba(255,135,151,.1);color:var(--danger);font-weight:700;text-align:left}
+.scrim{position:fixed;z-index:20;inset:0;background:rgba(0,0,0,.58);opacity:0;visibility:hidden;transition:.25s}
+.scrim.show{opacity:1;visibility:visible}
+
+.main{max-width:1450px;margin:auto;padding:clamp(19px,4vw,45px)}
+.page{display:none}.page.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:15px;margin-bottom:24px}
+.kicker{color:var(--mint);font-size:10px;letter-spacing:2px;font-weight:900;text-transform:uppercase;margin-bottom:9px}
+.page-heading h1{font-size:clamp(25px,3vw,36px);letter-spacing:-1.2px}
+.subtext{color:var(--muted);font-size:13px;line-height:1.7;margin-top:8px}
+.count{display:inline-block;margin-left:10px;padding:4px 10px;border-radius:20px;background:rgba(66,230,173,.1);color:var(--mint);font-size:11px;font-weight:800;vertical-align:middle}
+
+.hero{position:relative;overflow:hidden;border:1px solid rgba(66,230,173,.2);border-radius:24px;padding:clamp(25px,4vw,43px);background:linear-gradient(112deg,#123e38 0%,#142b3b 56%,#1a2944 100%);margin-bottom:22px}
+.hero::before{content:"";position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(66,230,173,.25),transparent 70%);right:-60px;top:-110px;animation:drift 12s ease-in-out infinite}
+.hero-content{position:relative;z-index:1;max-width:590px}
+.hero-tag{display:inline-flex;padding:7px 11px;border-radius:30px;background:rgba(66,230,173,.12);color:var(--mint);font-size:10px;font-weight:900;letter-spacing:1.5px;margin-bottom:18px}
+.hero h1{font-size:clamp(29px,4vw,44px);line-height:1.08;letter-spacing:-1.7px;margin-bottom:13px}
+.hero p{color:#bfd2d0;font-size:13px;line-height:1.8;max-width:450px}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:23px}
+.hero-btn{padding:12px 16px;border-radius:10px;background:var(--mint);color:#06251b;font-weight:900;font-size:12px;transition:.2s}
+.hero-btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.hero-btn.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:white}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 30px}
+.stat{background:rgba(16,26,43,.7);border:1px solid var(--line);border-radius:17px;padding:20px;backdrop-filter:blur(10px)}
+.stat-top{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:11px}
+.stat-icon{width:34px;height:34px;display:grid;place-items:center;background:rgba(66,230,173,.1);border-radius:10px;font-size:16px}
+.stat h2{font-size:25px;margin:14px 0 5px;letter-spacing:-.7px}
+.stat small{font-size:11px;color:var(--muted)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin:32px 0 15px}
+.section-head h2{font-size:18px;letter-spacing:-.5px}
+.section-head span{color:var(--mint);font-size:11px;font-weight:800}
+
+.service-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.service-card{background:linear-gradient(145deg,#121f32,#101a2b);border:1px solid var(--line);border-radius:17px;padding:21px;cursor:pointer;transition:.25s;min-height:150px}
+.service-card:hover{transform:translateY(-4px);border-color:rgba(66,230,173,.5);box-shadow:0 18px 40px rgba(0,0,0,.3)}
+.service-icon{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;background:rgba(66,230,173,.1);font-size:21px;margin-bottom:16px}
+.service-card h3{font-size:14px;margin-bottom:7px}
+.service-card p{color:var(--muted);font-size:11px;line-height:1.6}
+.service-arrow{color:var(--mint);font-size:11px;font-weight:900;margin-top:14px;display:block;letter-spacing:.5px}
+
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px}
+.product{position:relative;background:linear-gradient(160deg,rgba(26,42,68,.85),rgba(13,21,36,.95));border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:.25s;overflow:hidden}
+.product::after{content:"";position:absolute;inset:auto -40% -60% auto;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(66,230,173,.12),transparent 70%);transition:.4s;pointer-events:none}
+.product:hover{transform:translateY(-4px);border-color:rgba(66,230,173,.45);box-shadow:0 18px 40px rgba(0,0,0,.35)}
+.product:hover::after{transform:scale(1.6)}
+.product.hide-search{display:none}
+.product-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;background:rgba(66,230,173,.1);margin-bottom:4px}
+.product-tag{position:absolute;top:18px;right:18px;font-size:9px;font-weight:800;letter-spacing:1.2px;padding:5px 9px;border-radius:20px;background:rgba(255,255,255,.06);color:#b6c4d6;text-transform:uppercase}
+.product h3{font-size:15px;letter-spacing:-.2px;padding-right:60px}
+.product p{color:var(--muted);font-size:12px;line-height:1.6;flex:1}
+.product-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:10px}
+.price{font-weight:900;font-size:16px}
+.price.free{color:var(--mint)}
+.price.tba{font-size:11px;color:#6b7b91;font-weight:700}
+.buy{padding:9px 16px;border-radius:10px;background:var(--mint);color:#06251b;font-weight:900;font-size:12px;transition:.2s}
+.buy:hover{filter:brightness(1.07);transform:translateY(-1px)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;margin-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:9px 15px;border-radius:30px;border:1px solid var(--line);background:var(--surface);color:#c4d0df;font-size:12px;font-weight:700;white-space:nowrap;transition:.2s}
+.chip:hover{border-color:rgba(66,230,173,.4)}
+.chip.on{background:var(--mint);color:#06251b;border-color:transparent}
+
+.content-panel{background:rgba(16,26,43,.7);border:1px solid var(--line);border-radius:18px;padding:23px}
+.empty-state{padding:35px 15px;text-align:center}
+.empty-state .empty-icon{font-size:34px;margin-bottom:13px}
+.empty-state h3{font-size:16px;margin-bottom:8px}
+.empty-state p{font-size:12px;color:var(--muted);line-height:1.7}
+.data-row{padding:14px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:15px;font-size:13px}
+.data-row:last-child{border-bottom:0}
+.data-row span{color:var(--muted)}
+.notice{border:1px solid rgba(66,230,173,.2);background:rgba(66,230,173,.06);padding:14px;border-radius:12px;color:#b9d9ce;font-size:12px;line-height:1.6;margin-top:18px}
+.bottom{text-align:center;color:#5e6e84;font-size:10px;padding:40px 10px 15px}
+
+/* ORDER MODAL */
+.modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:20px;background:rgba(3,7,14,.7);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:.25s}
+.modal.show{opacity:1;visibility:visible}
+.modal-card{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:var(--shadow);transform:translateY(20px) scale(.97);transition:.3s cubic-bezier(.2,.7,.2,1)}
+.modal.show .modal-card{transform:none}
+.modal-card h2{font-size:22px;letter-spacing:-.6px}
+.modal-actions{display:flex;gap:10px;margin-top:6px}
+.modal-actions .primary{margin-top:0;flex:1}
+.ghost{flex:0 0 auto;padding:15px 18px;border-radius:12px;background:var(--surface2);color:white;font-weight:700;border:1px solid var(--line)}
+
+@media(max-width:1000px){.service-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:850px){#authScreen{grid-template-columns:1fr}.auth-story{display:none}.auth-card .brand{display:block}.auth-side{min-height:100vh}}
+@media(max-width:560px){
+  .topbar{height:66px}.top-brand{font-size:16px}.search-wrap{display:none}.user-chip{padding:5px}.user-chip .user-name{display:none}
+  .main{padding:20px 14px}.stats{grid-template-columns:1fr}.stat{padding:16px}
+  .service-grid{grid-template-columns:1fr 1fr}.service-card{padding:16px;min-height:140px}
+  .hero{border-radius:19px}.page-heading{align-items:flex-start;flex-direction:column}
+  .product-grid{grid-template-columns:1fr 1fr;gap:10px}.product{padding:15px}.product h3{font-size:13px;padding-right:0}.product-tag{position:static;align-self:flex-start;order:-1;margin-bottom:-2px}.product p{font-size:11px}
+  .buy{padding:8px 11px}
+}
+@media(max-width:360px){.service-grid,.product-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}.story-content h1 .accent{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH ============ -->
+<section id="authScreen">
+  <div class="auth-story">
+    <div class="aurora a"></div><div class="aurora b"></div><div class="aurora c"></div><div class="grid-lines"></div>
+    <div class="brand reveal" style="--d:0s">PROMZY<em>MARKET.</em></div>
+    <div class="story-content">
+      <div class="eyebrow reveal" style="--d:.15s">YOUR DIGITAL MARKETPLACE</div>
+      <h1><span class="reveal" style="--d:.3s">Everything digital.</span><br><span class="accent">One destination.</span></h1>
+      <p class="reveal" style="--d:.7s">Explore airtime and data, gift cards, digital downloads, gaming top-ups, web services, design, software and learning — all from one account.</p>
+      <div class="story-points reveal" style="--d:.9s"><span>✦ Simple shopping</span><span>◈ One account</span><span>↗ Built for mobile</span></div>
+    </div>
+    <div class="scene3d" id="scene3d"></div>
+    <div class="auth-foot-left">© 2026 Promzy Market</div>
+  </div>
+  <div class="auth-side">
+    <div class="auth-card reveal" style="--d:.35s">
+      <div class="brand">PROMZY<em>MARKET.</em></div>
+      <div class="eyebrow" id="authEyebrow">WELCOME BACK</div>
+      <h2 id="authTitle">Sign in to continue</h2>
+      <p class="auth-hint" id="authHint">Access your account and your marketplace dashboard.</p>
+      <form id="authForm">
+        <div id="signupFields" class="hidden">
+          <label class="field-label" for="username">Username</label>
+          <input class="field" id="username" placeholder="Choose a username" autocomplete="username">
+          <label class="field-label" for="phone">Phone number</label>
+          <input class="field" id="phone" type="tel" placeholder="e.g. 0241234567" autocomplete="tel">
+        </div>
+        <label class="field-label" for="email">Email address</label>
+        <input class="field" id="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        <label class="field-label" for="password">Password</label>
+        <input class="field" id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required minlength="6">
+        <button class="primary" id="authSubmit" type="submit">Sign in</button>
+      </form>
+      <div id="authMessage" role="status"></div>
+      <div class="auth-switch"><span id="switchPrompt">New to Promzy Market?</span><button class="text-button" id="switchMode" type="button">Create account</button></div>
+      <div class="auth-foot">Your account is protected by Supabase authentication.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ APP ============ -->
+<section id="appScreen" class="hidden">
+  <div class="scrim" id="scrim"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head"><div class="brand">PROMZY<em>MARKET.</em></div><button class="close-menu" id="closeMenu" aria-label="Close menu">×</button></div>
+    <div class="side-label">MARKETPLACE</div>
+    <button class="nav-item active" data-page="dashboard"><span class="nav-icon">⌂</span>Dashboard</button>
+    <button class="nav-item" data-page="airtime"><span class="nav-icon">📱</span>Airtime & Data</button>
+    <button class="nav-item" data-page="gifts"><span class="nav-icon">🎁</span>Gift Cards</button>
+    <button class="nav-item" data-page="digital"><span class="nav-icon">💎</span>Digital Products</button>
+    <button class="nav-item" data-page="boosting"><span class="nav-icon">🚀</span>Social Boosting</button>
+    <button class="nav-item" data-page="gaming"><span class="nav-icon">🎮</span>Gaming</button>
+    <button class="nav-item" data-page="web"><span class="nav-icon">🌐</span>Web Services</button>
+    <button class="nav-item" data-page="design"><span class="nav-icon">🎨</span>Graphics & Design</button>
+    <button class="nav-item" data-page="software"><span class="nav-icon">💻</span>Software & Tools</button>
+    <button class="nav-item" data-page="learning"><span class="nav-icon">📚</span>Learning Resources</button>
+    <div class="side-label">YOUR ACCOUNT</div>
+    <button class="nav-item" data-page="orders"><span class="nav-icon">▤</span>My Orders</button>
+    <button class="nav-item" data-page="wallet"><span class="nav-icon">◉</span>Wallet</button>
+    <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</button>
+    <div class="side-bottom"><button class="logout" id="logoutBtn">↪ &nbsp; Sign out</button></div>
+  </aside>
+
+  <header class="topbar">
+    <div class="top-brand">PROMZY<em>MARKET.</em></div>
+    <div class="top-right">
+      <div class="search-wrap"><span class="search-icon">⌕</span><input class="search" id="searchInput" placeholder="Search marketplace"></div>
+      <div class="user-chip"><div class="avatar" id="avatar">P</div><span class="user-name" id="headerUsername">Customer</span></div>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation">☰</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <section class="page active" id="page-dashboard">
+      <div class="hero">
+        <div class="hero-content">
+          <div class="hero-tag">✦ YOUR MARKETPLACE, YOUR WAY</div>
+          <h1 id="welcomeTitle">Welcome to your digital hub.</h1>
+          <p>Find the digital essentials you need, manage your orders and keep everything in one convenient place.</p>
+          <div class="hero-actions">
+            <button class="hero-btn" data-go="airtime">Explore marketplace&nbsp; →</button>
+            <button class="hero-btn secondary" data-go="wallet">View wallet</button>
+          </div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-top">WALLET BALANCE <span class="stat-icon">◉</span></div><h2 id="walletBalance">GH₵ 0.00</h2><small>Available balance</small></div>
+        <div class="stat"><div class="stat-top">TOTAL ORDERS <span class="stat-icon">▤</span></div><h2 id="orderCount">0</h2><small>Your purchases</small></div>
+        <div class="stat"><div class="stat-top">ACCOUNT STATUS <span class="stat-icon">✦</span></div><h2 style="color:var(--mint)">Active</h2><small>You're signed in</small></div>
+      </div>
+      <div class="section-head"><h2>Popular right now</h2><span>FEATURED</span></div>
+      <div class="product-grid" id="featuredGrid"></div>
+      <div class="section-head"><h2>Explore categories</h2><span>CHOOSE A CATEGORY</span></div>
+      <div class="service-grid">
+        <article class="service-card" data-go="airtime"><div class="service-icon">📱</div><h3>Airtime & Data</h3><p>MTN, Telecel and AT top-ups and data bundles.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="gifts"><div class="service-icon">🎁</div><h3>Gift Cards</h3><p>Google Play, Steam, Netflix, Amazon and more.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="digital"><div class="service-icon">💎</div><h3>Digital Products</h3><p>Templates, presets, sample packs and ebooks.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="boosting"><div class="service-icon">🚀</div><h3>Social Boosting</h3><p>Promotion and marketing for 8 platforms.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="gaming"><div class="service-icon">🎮</div><h3>Gaming</h3><p>Diamonds, UC, V-Bucks and Robux.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="web"><div class="service-icon">🌐</div><h3>Web Services</h3><p>Domains, hosting and website builds.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="design"><div class="service-icon">🎨</div><h3>Graphics & Design</h3><p>Logos, flyers, post packs and brand kits.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="software"><div class="service-icon">💻</div><h3>Software & Tools</h3><p>Official subscriptions and licenses.</p><span class="service-arrow">EXPLORE →</span></article>
+        <article class="service-card" data-go="learning"><div class="service-icon">📚</div><h3>Learning Resources</h3><p>Free and premium courses.</p><span class="service-arrow">EXPLORE →</span></article>
+      </div>
+    </section>
+
+    <!-- Category pages (products rendered from catalog) -->
+    <section class="page" id="page-airtime"><div class="page-heading"><div><div class="kicker">MOBILE TOP-UPS</div><h1>Airtime & Data <span class="count" id="count-airtime"></span></h1><p class="subtext">Top up any MTN, Telecel or AT line instantly.</p></div></div><div class="product-grid" id="grid-airtime"></div></section>
+    <section class="page" id="page-gifts"><div class="page-heading"><div><div class="kicker">DIGITAL GIFTING</div><h1>Gift Cards <span class="count" id="count-gifts"></span></h1><p class="subtext">Digital codes delivered by email.</p></div></div><div class="product-grid" id="grid-gifts"></div></section>
+    <section class="page" id="page-digital"><div class="page-heading"><div><div class="kicker">DOWNLOADS & TOOLS</div><h1>Digital Products <span class="count" id="count-digital"></span></h1><p class="subtext">Templates, presets, sample packs and ebooks.</p></div></div><div class="product-grid" id="grid-digital"></div></section>
+
+    <section class="page" id="page-boosting">
+      <div class="page-heading"><div><div class="kicker">SOCIAL MEDIA SERVICES</div><h1>Social Boosting <span class="count" id="count-boosting"></span></h1><p class="subtext">Pick a platform, then choose a service.</p></div></div>
+      <div class="stats">
+        <div class="stat"><div class="stat-top">PLATFORMS <span class="stat-icon">◎</span></div><h2>8</h2><small>TikTok, Instagram, YouTube, Facebook, Telegram, X, WhatsApp, SoundCloud</small></div>
+        <div class="stat"><div class="stat-top">SUPPLIER API <span class="stat-icon">↗</span></div><h2 style="color:var(--gold)">Not connected</h2><small>No orders are sent to suppliers yet</small></div>
+        <div class="stat"><div class="stat-top">ORDER MODE <span class="stat-icon">▤</span></div><h2>Preview</h2><small>Requests are previewed only</small></div>
+      </div>
+      <div class="chips" id="platformChips"></div>
+      <div class="product-grid" id="grid-boosting"></div>
+    </section>
+
+    <section class="page" id="page-gaming"><div class="page-heading"><div><div class="kicker">GAMING</div><h1>Gaming <span class="count" id="count-gaming"></span></h1><p class="subtext">Game currency and gift codes.</p></div></div><div class="product-grid" id="grid-gaming"></div></section>
+    <section class="page" id="page-web"><div class="page-heading"><div><div class="kicker">BUILD ONLINE</div><h1>Web Services <span class="count" id="count-web"></span></h1><p class="subtext">Domains, hosting and website work.</p></div></div><div class="product-grid" id="grid-web"></div></section>
+    <section class="page" id="page-design"><div class="page-heading"><div><div class="kicker">CREATIVE ASSETS</div><h1>Graphics & Design <span class="count" id="count-design"></span></h1><p class="subtext">Design services and ready-made creative packs.</p></div></div><div class="product-grid" id="grid-design"></div></section>
+    <section class="page" id="page-software"><div class="page-heading"><div><div class="kicker">PRODUCTIVITY</div><h1>Software & Tools <span class="count" id="count-software"></span></h1><p class="subtext">Official subscriptions and licenses only.</p></div></div><div class="product-grid" id="grid-software"></div></section>
+    <section class="page" id="page-learning"><div class="page-heading"><div><div class="kicker">LEARN SOMETHING NEW</div><h1>Learning Resources <span class="count" id="count-learning"></span></h1><p class="subtext">Free and premium courses.</p></div></div><div class="product-grid" id="grid-learning"></div></section>
+
+    <!-- Account pages -->
+    <section class="page" id="page-orders"><div class="page-heading"><div><div class="kicker">PURCHASE HISTORY</div><h1>My Orders</h1><p class="subtext">Keep track of your marketplace purchases.</p></div></div><div class="content-panel" id="ordersContent"><div class="empty-state"><div class="empty-icon">▤</div><h3>No orders yet</h3><p>Your orders will appear here after you make a purchase.</p></div></div></section>
+    <section class="page" id="page-wallet"><div class="page-heading"><div><div class="kicker">YOUR FUNDS</div><h1>Wallet</h1><p class="subtext">View your current marketplace wallet balance.</p></div></div><div class="content-panel"><div class="kicker">AVAILABLE BALANCE</div><h2 id="walletPageBalance" style="font-size:34px;margin:10px 0">GH₵ 0.00</h2><p class="subtext">Wallet funding and withdrawals will be enabled after secure payment integration.</p><div class="notice">For safety, wallet balances must only be changed by a verified server-side payment process — never by editing the page.</div></div></section>
+    <section class="page" id="page-settings"><div class="page-heading"><div><div class="kicker">PROFILE</div><h1>Account Settings</h1><p class="subtext">Review the details connected to your account.</p></div></div><div class="content-panel"><div class="data-row"><span>Username</span><strong id="settingsUsername">—</strong></div><div class="data-row"><span>Email</span><strong id="settingsEmail">—</strong></div><div class="data-row"><span>Phone</span><strong id="settingsPhone">—</strong></div></div></section>
+
+    <div class="bottom">© 2026 Promzy Market · Your digital marketplace</div>
+  </main>
+</section>
+
+<!-- ORDER MODAL -->
+<div class="modal" id="orderModal" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <div class="kicker" id="orderCat">ORDER</div>
+    <h2 id="orderTitle"></h2>
+    <p class="subtext" id="orderDesc"></p>
+    <label class="field-label" id="orderFieldLabel" for="orderField"></label>
+    <input class="field" id="orderField" autocomplete="off">
+    <div class="modal-actions">
+      <button class="ghost" id="orderCancel" type="button">Cancel</button>
+      <button class="primary" id="orderConfirm" type="button">Prepare request</button>
+    </div>
+    <div id="orderMsg" class="notice" role="status">Payments and supplier delivery aren't connected yet. Nothing is charged or submitted.</div>
+  </div>
+</div>
+
+<script>
+/* Add your Supabase Project URL and publishable/anon key below.
+   Never place a service_role or secret key in browser code. */
+const SUPABASE_URL = "PASTE_YOUR_PROJECT_URL";
+const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY";
+
+const configReady = !SUPABASE_URL.startsWith("PASTE_") && !SUPABASE_KEY.startsWith("PASTE_");
+const supabaseClient = configReady ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+let signupMode = false;
+let activeUser = null;
+
+const $ = id => document.getElementById(id);
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ================= CATALOG =================
+   price: null = "Pricing soon" (set a number later), 0 = Free, or a GHS amount.
+   Edit prices here; the whole site updates automatically. */
+const CATEGORIES = {
+  airtime:  {label:"Airtime & Data",     field:"Phone number",               ph:"e.g. 0241234567",     type:"tel"},
+  gifts:    {label:"Gift Cards",         field:"Email for delivery",         ph:"you@example.com",     type:"email"},
+  digital:  {label:"Digital Products",   field:"Email for delivery",         ph:"you@example.com",     type:"email"},
+  boosting: {label:"Social Boosting",    field:"Public profile or post link",ph:"https://...",         type:"url"},
+  gaming:   {label:"Gaming",             field:"Player ID",                  ph:"Enter your in-game ID", type:"text"},
+  web:      {label:"Web Services",       field:"Domain or business name",    ph:"e.g. mybrand.com",    type:"text"},
+  design:   {label:"Graphics & Design",  field:"Email for delivery",         ph:"you@example.com",     type:"email"},
+  software: {label:"Software & Tools",   field:"Email for delivery",         ph:"you@example.com",     type:"email"},
+  learning: {label:"Learning Resources", field:"Email for delivery",         ph:"you@example.com",     type:"email"}
+};
+
+const PRODUCTS = [];
+const add = (cat,name,desc,icon,tag,price=null,platform=null) =>
+  PRODUCTS.push({id:PRODUCTS.length,cat,name,desc,icon,tag,price,platform});
+
+// Airtime & Data
+add("airtime","MTN Airtime Top-up","Instant credit to any MTN line.","📱","MTN");
+add("airtime","MTN Data 1GB","Data bundle for your MTN line.","📶","MTN");
+add("airtime","MTN Data 5GB","Data bundle for your MTN line.","📶","MTN");
+add("airtime","MTN Data 10GB","Data bundle for your MTN line.","📶","MTN");
+add("airtime","Telecel Airtime Top-up","Instant credit to any Telecel line.","📱","Telecel");
+add("airtime","Telecel Data 2GB","Data bundle for your Telecel line.","📶","Telecel");
+add("airtime","Telecel Data 5GB","Data bundle for your Telecel line.","📶","Telecel");
+add("airtime","AT Airtime Top-up","Instant credit to any AT line.","📱","AT");
+add("airtime","AT Data 3GB","Data bundle for your AT line.","📶","AT");
+
+// Gift Cards
+add("gifts","Google Play Gift Card","Digital code delivered by email.","🎁","Google");
+add("gifts","Apple App Store & iTunes","Digital code delivered by email.","🍎","Apple");
+add("gifts","Steam Wallet Code","Digital code delivered by email.","🎮","Steam");
+add("gifts","Amazon Gift Card","Digital code delivered by email.","📦","Amazon");
+add("gifts","Netflix Gift Card","Digital code delivered by email.","🎬","Netflix");
+add("gifts","Spotify Premium Gift","Digital code delivered by email.","🎧","Spotify");
+add("gifts","PlayStation Store Card","Digital code delivered by email.","🕹️","PlayStation");
+add("gifts","Xbox Gift Card","Digital code delivered by email.","🟢","Xbox");
+
+// Digital Products
+add("digital","Resume Template Pack","Editable CV and cover letter templates.","📄","Templates");
+add("digital","Notion Productivity Templates","Planners, trackers and dashboards.","🗂️","Templates");
+add("digital","Social Media Template Pack","Ready-to-edit post and story templates.","📣","Templates");
+add("digital","Lightroom Preset Pack","Colour presets for photo editing.","📷","Presets");
+add("digital","Music Production Sample Pack","Drum loops, one-shots and melodies.","🎵","Audio");
+add("digital","E-book Bundle: Side Hustles","Practical guides to earning online.","📘","Ebooks");
+
+// Social Boosting (generated per platform)
+const PLATFORMS = [["TikTok","🎵"],["Instagram","📸"],["YouTube","▶️"],["Facebook","📘"],["Telegram","✈️"],["X (Twitter)","𝕏"],["WhatsApp","💬"],["SoundCloud","🎧"]];
+const BOOST = [
+  ["Content promotion campaign","Promote your posts to a wider audience."],
+  ["Creator / influencer promotion","Collaborate with creators on your brand."],
+  ["Account audit","Review your profile and get a growth plan."],
+  ["Strategy consultation","Get a plan tailored to your goals."]
+];
+PLATFORMS.forEach(([pl,ic])=>BOOST.forEach(([svc,desc])=>add("boosting",`${pl} · ${svc}`,desc,ic,pl,null,pl)));
+
+// Gaming
+add("gaming","Free Fire Diamonds","Top up your Free Fire account.","🔥","Free Fire");
+add("gaming","PUBG Mobile UC","Unknown Cash top-up for PUBG Mobile.","🔫","PUBG");
+add("gaming","Mobile Legends Diamonds","Top up your Mobile Legends account.","⚔️","MLBB");
+add("gaming","Call of Duty Mobile CP","CP top-up for Call of Duty Mobile.","🎯","CODM");
+add("gaming","Roblox Robux Card","Robux gift card code.","🧱","Roblox");
+add("gaming","Fortnite V-Bucks Card","V-Bucks gift card code.","🏗️","Fortnite");
+
+// Web Services
+add("web","Domain: .com registration","Register a .com domain for your brand.","🌐","Domain");
+add("web","Domain: .gh registration","Register a Ghana .gh domain.","🇬🇭","Domain");
+add("web","Starter Web Hosting","Hosting plan for a small website.","🖥️","Hosting");
+add("web","Business Web Hosting","Hosting plan for busy business sites.","🏢","Hosting");
+add("web","Landing Page Build","A single high-converting landing page.","🚀","Build");
+add("web","Full Website Build","Multi-page website designed and built for you.","🧩","Build");
+add("web","Website Maintenance Plan","Updates, backups and monitoring.","🛠️","Care");
+add("web","Custom Web App","Tailored web application built to your spec.","⚡","Build");
+
+// Graphics & Design
+add("design","Logo Design","Original logo with source files.","✏️","Branding");
+add("design","Brand Identity Kit","Logo, colours, typography and guidelines.","🎨","Branding");
+add("design","Social Media Post Pack","10 custom posts for your channels.","📱","Social");
+add("design","Flyer Design","Print-ready flyer for events or promos.","📰","Print");
+add("design","Business Card Design","Print-ready business card design.","💳","Print");
+add("design","Presentation Design","Professional slide deck design.","📊","Slides");
+add("design","Canva Template Pack","Editable Canva templates for your brand.","🖼️","Templates");
+
+// Software & Tools (official licenses only)
+add("software","Microsoft 365 Personal","Official Microsoft 365 subscription.","🟦","Microsoft");
+add("software","Canva Pro","Official Canva Pro subscription.","🟣","Canva");
+add("software","Grammarly Premium","Official Grammarly Premium subscription.","🟢","Grammarly");
+add("software","Notion Plus","Official Notion Plus subscription.","⬛","Notion");
+add("software","Google One Storage","Official Google One storage plan.","☁️","Google");
+add("software","Adobe Creative Cloud","Official Adobe Creative Cloud licence.","🅰️","Adobe");
+
+// Learning Resources (Mira Tech courses)
+add("learning","Instagram Method","Free course — start learning today.","📸","Free",0);
+add("learning","Facebook Method","Free course — start learning today.","📘","Free",0);
+add("learning","WhatsApp Method","Free course — start learning today.","💬","Free",0);
+add("learning","TikTok Method","Free course — start learning today.","🎵","Free",0);
+add("learning","Android Method","Premium course for Android users.","🤖","Premium",20);
+add("learning","Gallery Method","Premium course for your gallery.","🖼️","Premium",20);
+
+const FEATURED = ["MTN Data 5GB","Google Play Gift Card","Android Method","Logo Design","Free Fire Diamonds","Domain: .com registration"];
+
+/* ================= RENDERING ================= */
+function priceHTML(p){
+  if(p.price===null) return '<span class="price tba">Pricing soon</span>';
+  if(p.price===0) return '<span class="price free">Free</span>';
+  return `<span class="price">GH₵ ${Number(p.price).toFixed(2)}</span>`;
+}
+function cardHTML(p){
+  return `<article class="product" data-search="${escapeHTML((p.name+" "+p.desc).toLowerCase())}">
+    <span class="product-tag">${escapeHTML(p.tag)}</span>
+    <div class="product-icon">${p.icon}</div>
+    <h3>${escapeHTML(p.name)}</h3>
+    <p>${escapeHTML(p.desc)}</p>
+    <div class="product-foot">${priceHTML(p)}<button class="buy" data-id="${p.id}" type="button">Order</button></div>
+  </article>`;
+}
+let boostFilter="All";
+function renderBoost(){
+  $("platformChips").innerHTML=["All",...PLATFORMS.map(p=>p[0])]
+    .map(p=>`<button class="chip${p===boostFilter?" on":""}" data-pl="${escapeHTML(p)}" type="button">${escapeHTML(p)}</button>`).join("");
+  const items=PRODUCTS.filter(p=>p.cat==="boosting"&&(boostFilter==="All"||p.platform===boostFilter));
+  $("grid-boosting").innerHTML=items.map(cardHTML).join("");
+  $("count-boosting").textContent=items.length+" services";
+}
+function renderAll(){
+  Object.keys(CATEGORIES).forEach(cat=>{
+    if(cat==="boosting")return;
+    const items=PRODUCTS.filter(p=>p.cat===cat);
+    $("grid-"+cat).innerHTML=items.map(cardHTML).join("");
+    $("count-"+cat).textContent=items.length+" items";
+  });
+  renderBoost();
+  $("featuredGrid").innerHTML=FEATURED.map(n=>PRODUCTS.find(p=>p.name===n)).filter(Boolean).map(cardHTML).join("");
+}
+renderAll();
+
+$("platformChips").addEventListener("click",e=>{
+  const chip=e.target.closest(".chip");if(!chip)return;
+  boostFilter=chip.dataset.pl;renderBoost();
+});
+
+/* ================= ORDER MODAL ================= */
+let currentProduct=null;
+function openOrder(id){
+  const p=PRODUCTS[id];if(!p)return;
+  currentProduct=p;
+  const c=CATEGORIES[p.cat];
+  $("orderCat").textContent=c.label.toUpperCase();
+  $("orderTitle").textContent=p.name;
+  $("orderDesc").textContent=p.desc;
+  $("orderFieldLabel").textContent=c.field;
+  const f=$("orderField");f.type=c.type;f.placeholder=c.ph;f.value="";
+  $("orderMsg").textContent="Payments and supplier delivery aren't connected yet. Nothing is charged or submitted.";
+  $("orderMsg").style.borderColor="rgba(66,230,173,.2)";
+  $("orderModal").classList.add("show");
+  setTimeout(()=>f.focus(),250);
+}
+function closeOrder(){$("orderModal").classList.remove("show");}
+document.addEventListener("click",e=>{
+  const b=e.target.closest(".buy");
+  if(b)openOrder(Number(b.dataset.id));
+});
+$("orderCancel").addEventListener("click",closeOrder);
+$("orderModal").addEventListener("click",e=>{if(e.target.id==="orderModal")closeOrder();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeOrder();});
+$("orderConfirm").addEventListener("click",()=>{
+  if(!currentProduct)return;
+  const v=$("orderField").value.trim();
+  const c=CATEGORIES[currentProduct.cat];
+  let err="";
+  if(!v) err=`Please enter your ${c.field.toLowerCase()}.`;
+  else if(c.type==="url"){try{new URL(v);}catch{err="Please enter a valid full link beginning with https://";}}
+  else if(c.type==="email"&&!/^\S+@\S+\.\S+$/.test(v)) err="Please enter a valid email address.";
+  const msg=$("orderMsg");
+  msg.style.borderColor=err?"rgba(255,135,151,.35)":"rgba(66,230,173,.2)";
+  msg.textContent=err||`Request preview ready for ${currentProduct.name}. Payment and supplier delivery are not connected yet, so nothing has been submitted or charged.`;
+});
+
+/* ================= AUTH ================= */
+function authMessage(text,good=false){$("authMessage").textContent=text;$("authMessage").style.color=good?"var(--mint)":"var(--danger)";}
+function setAuthMode(signup){
+  signupMode=signup;
+  $("signupFields").classList.toggle("hidden",!signup);
+  $("authEyebrow").textContent=signup?"JOIN THE MARKETPLACE":"WELCOME BACK";
+  $("authTitle").textContent=signup?"Create your account":"Sign in to continue";
+  $("authHint").textContent=signup?"Set up your Promzy Market account in a few steps.":"Access your account and your marketplace dashboard.";
+  $("authSubmit").textContent=signup?"Create account":"Sign in";
+  $("switchPrompt").textContent=signup?"Already have an account?":"New to Promzy Market?";
+  $("switchMode").textContent=signup?"Sign in":"Create account";
+  $("password").autocomplete=signup?"new-password":"current-password";
+  authMessage("");
+}
+$("switchMode").addEventListener("click",()=>setAuthMode(!signupMode));
+
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!configReady){authMessage("Add your Supabase Project URL and Publishable Key in the script section first.");return;}
+  const email=$("email").value.trim();
+  const password=$("password").value;
+  $("authSubmit").disabled=true;$("authSubmit").textContent="Please wait…";
+  try{
+    if(signupMode){
+      const username=$("username").value.trim();
+      const phone=$("phone").value.trim();
+      if(!username||!phone)throw new Error("Please enter your username and phone number.");
+      if(password.length<6)throw new Error("Your password must be at least 6 characters.");
+      const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{username,phone}}});
+      if(error)throw error;
+      if(data.session){await openApp(data.user);}
+      else{authMessage("Account created. Check your email to confirm your address, then sign in.",true);setAuthMode(false);}
+    }else{
+      const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      await openApp(data.user);
+    }
+  }catch(err){authMessage(err.message||"Something went wrong. Please try again.");}
+  finally{$("authSubmit").disabled=false;$("authSubmit").textContent=signupMode?"Create account":"Sign in";}
+});
+
+function showAuth(){
+  $("appScreen").classList.add("hidden");$("authScreen").classList.remove("hidden");
+}
+async function openApp(user){
+  if(!user)return;
+  activeUser=user;
+  $("authScreen").classList.add("hidden");$("appScreen").classList.remove("hidden");
+  const metadata=user.user_metadata||{};
+  const {data}=await supabaseClient.from("profiles").select("username,phone").eq("id",user.id).maybeSingle();
+  const profile=data;
+  const name=profile?.username||metadata.username||"Customer";
+  $("headerUsername").textContent=name;
+  $("avatar").textContent=name.slice(0,1).toUpperCase();
+  $("welcomeTitle").textContent=`Welcome, ${name}.`;
+  $("settingsUsername").textContent=name;
+  $("settingsEmail").textContent=user.email||"—";
+  $("settingsPhone").textContent=profile?.phone||metadata.phone||"Not provided";
+  await Promise.all([loadWallet(user.id),loadOrders(user.id)]);
+}
+async function loadWallet(userId){
+  const {data,error}=await supabaseClient.from("wallets").select("balance").eq("user_id",userId).maybeSingle();
+  if(error){console.error("Wallet:",error.message);return;}
+  const amount=Number(data?.balance||0).toFixed(2);
+  $("walletBalance").textContent=`GH₵ ${amount}`;$("walletPageBalance").textContent=`GH₵ ${amount}`;
+}
+async function loadOrders(userId){
+  const {data,error}=await supabaseClient.from("orders").select("id,amount,status,created_at").eq("user_id",userId).order("created_at",{ascending:false});
+  if(error){console.error("Orders:",error.message);$("ordersContent").textContent="Could not load orders.";return;}
+  const rows=data||[];$("orderCount").textContent=rows.length;
+  if(!rows.length){$("ordersContent").innerHTML='<div class="empty-state"><div class="empty-icon">▤</div><h3>No orders yet</h3><p>Your orders will appear here after you make a purchase.</p></div>';return;}
+  $("ordersContent").innerHTML=rows.map(o=>`<div class="data-row"><strong>Order #${escapeHTML(o.id)}</strong><span>GH₵ ${Number(o.amount).toFixed(2)} · ${escapeHTML(o.status||"pending")}</span></div>`).join("");
+}
+
+/* ================= NAVIGATION ================= */
+function openMenu(){$("sidebar").classList.add("open");$("scrim").classList.add("show");}
+function closeMenu(){$("sidebar").classList.remove("open");$("scrim").classList.remove("show");}
+$("menuToggle").addEventListener("click",openMenu);
+$("closeMenu").addEventListener("click",closeMenu);
+$("scrim").addEventListener("click",closeMenu);
+
+function goToPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  const target=$("page-"+id);if(!target)return;
+  target.classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.page===id));
+  document.querySelectorAll(".product.hide-search").forEach(c=>c.classList.remove("hide-search"));
+  closeMenu();window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>goToPage(btn.dataset.page)));
+document.querySelectorAll("[data-go]").forEach(btn=>btn.addEventListener("click",()=>goToPage(btn.dataset.go)));
+
+/* Search: filters product cards on the current page; Enter jumps to the best match */
+$("searchInput").addEventListener("input",e=>{
+  const q=e.target.value.toLowerCase().trim();
+  document.querySelectorAll(".page.active .product").forEach(c=>c.classList.toggle("hide-search",!!q&&!c.dataset.search.includes(q)));
+});
+$("searchInput").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  const q=e.target.value.toLowerCase().trim();if(!q)return;
+  const hit=PRODUCTS.find(p=>(p.name+" "+p.desc).toLowerCase().includes(q));
+  const nav=[...document.querySelectorAll(".nav-item")].find(n=>n.textContent.toLowerCase().includes(q));
+  if(hit)goToPage(hit.cat);else if(nav)goToPage(nav.dataset.page);
+  e.target.value="";
+});
+
+$("logoutBtn").addEventListener("click",async()=>{
+  if(supabaseClient)await supabaseClient.auth.signOut();
+  activeUser=null;showAuth();$("authForm").reset();setAuthMode(false);
+});
+
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();});
+
+async function initialize(){
+  if(!configReady){showAuth();return;}
+  const {data,error}=await supabaseClient.auth.getSession();
+  if(error){console.error(error);showAuth();return;}
+  if(data.session)await openApp(data.session.user);else showAuth();
+  supabaseClient.auth.onAuthStateChange((event,session)=>{
+    if(event==="SIGNED_OUT"){activeUser=null;showAuth();}
+    else if(event==="SIGNED_IN"&&session&&!activeUser){openApp(session.user);}
+  });
+}
+/* ================= 3D LOGIN SCENE (Three.js) ================= */
+function init3D(){
+  const host=$("scene3d");
+  if(!host||!window.THREE)return;
+  const size=()=>({w:host.clientWidth||1,h:host.clientHeight||1});
+  let {w,h}=size();
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(42,w/h,.1,100);
+  camera.position.set(0,.4,10);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(w,h);
+  host.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0x9fb8ff,.55));
+  const keyLight=new THREE.PointLight(0x42e6ad,2.4,25);keyLight.position.set(-4,3,6);scene.add(keyLight);
+  const rimLight=new THREE.PointLight(0x5784ff,2,25);rimLight.position.set(5,-2,4);scene.add(rimLight);
+
+  /* Laptop with a live, scrolling screen */
+  const laptop=new THREE.Group();
+  const cvs=document.createElement("canvas");cvs.width=512;cvs.height=320;
+  const g=cvs.getContext("2d");
+  const screenTex=new THREE.CanvasTexture(cvs);
+  const shell=new THREE.MeshStandardMaterial({color:0x1b2a44,metalness:.75,roughness:.28});
+  const lid=new THREE.Mesh(new THREE.BoxGeometry(3.2,2,.12),shell);
+  lid.position.y=1;
+  const display=new THREE.Mesh(new THREE.PlaneGeometry(2.96,1.76),new THREE.MeshBasicMaterial({map:screenTex}));
+  display.position.z=.065;
+  lid.add(display);
+  const base=new THREE.Mesh(new THREE.BoxGeometry(3.6,.12,2.2),shell);
+  base.position.set(0,-.06,.9);
+  laptop.add(lid,base);
+  laptop.position.y=-.2;
+  scene.add(laptop);
+
+  /* Floating 3D product shapes orbiting the laptop */
+  const geoms=[new THREE.IcosahedronGeometry(.35,0),new THREE.OctahedronGeometry(.32,0),new THREE.TorusGeometry(.26,.08,12,32),new THREE.BoxGeometry(.5,.5,.5)];
+  const shapes=[];
+  for(let i=0;i<9;i++){
+    const mint=i%2===0;
+    const m=new THREE.Mesh(geoms[i%4],new THREE.MeshStandardMaterial({
+      color:mint?0x42e6ad:0x7da9ff,emissive:mint?0x0f5a45:0x1d3580,
+      metalness:.4,roughness:.25,wireframe:i%3===0
+    }));
+    m.userData={a:i/9*Math.PI*2,r:3.6+(i%3)*.5,speed:.15+(i%4)*.04,y:(i%3-1)*1.1,spin:.01+i*.003};
+    scene.add(m);shapes.push(m);
+  }
+
+  /* Starfield particles */
+  const N=400,pos=new Float32Array(N*3);
+  for(let i=0;i<N*3;i++)pos[i]=(Math.random()-.5)*26;
+  const pgeo=new THREE.BufferGeometry();
+  pgeo.setAttribute("position",new THREE.BufferAttribute(pos,3));
+  const stars=new THREE.Points(pgeo,new THREE.PointsMaterial({color:0x42e6ad,size:.04,transparent:true,opacity:.6}));
+  scene.add(stars);
+
+  function drawScreen(scroll){
+    g.fillStyle="#0b1422";g.fillRect(0,0,512,320);
+    const cols=["#42e6ad","#7da9ff","#ffd27a","#ff8797"];
+    for(let r=0;r<6;r++){
+      const y=38+((r*88-scroll)%528+528)%528-88;
+      for(let c=0;c<3;c++){
+        const x=14+c*166;
+        g.fillStyle="#152238";g.fillRect(x,y,150,76);
+        g.fillStyle=cols[(r+c)%cols.length];g.globalAlpha=.9;g.fillRect(x+10,y+10,34,34);g.globalAlpha=1;
+        g.fillStyle="#f4f7fb";g.font="bold 13px sans-serif";g.fillText("Product "+(r*3+c+1),x+54,y+28);
+        g.fillStyle="#2a3a50";g.fillRect(x+54,y+42,60,8);
+      }
+    }
+    g.fillStyle="#101a2b";g.fillRect(0,0,512,38);
+    g.fillStyle="#42e6ad";g.font="bold 16px sans-serif";g.fillText("PROMZY MARKET",14,25);
+  }
+
+  let mx=0,my=0;
+  window.addEventListener("pointermove",e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;});
+  window.addEventListener("resize",()=>{({w,h}=size());camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);});
+
+  const clock=new THREE.Clock();let scroll=0;
+  (function loop(){
+    requestAnimationFrame(loop);
+    if($("authScreen").classList.contains("hidden"))return;
+    const t=clock.getElapsedTime();
+    scroll=(scroll+.5)%528;
+    drawScreen(scroll);screenTex.needsUpdate=true;
+    laptop.rotation.y=Math.sin(t*.45)*.4+mx*.5;
+    laptop.rotation.x=-.08+my*.2;
+    laptop.position.y=-.2+Math.sin(t*1.1)*.12;
+    shapes.forEach(s=>{
+      const u=s.userData,a=u.a+t*u.speed;
+      s.position.set(Math.cos(a)*u.r,u.y+Math.sin(t*1.3+u.a)*.35,Math.sin(a)*u.r*.45);
+      s.rotation.x+=u.spin;s.rotation.y+=u.spin*1.4;
+    });
+    stars.rotation.y=t*.03;
+    camera.position.x+=(mx*2-camera.position.x)*.04;
+    camera.lookAt(0,0,0);
+    renderer.render(scene,camera);
+  })();
+}
+init3D();
+
+/* 3D tilt on product cards */
+document.addEventListener("pointermove",e=>{
+  const card=e.target.closest?e.target.closest(".product"):null;
+  document.querySelectorAll(".product.tilt").forEach(c=>{if(c!==card){c.classList.remove("tilt");c.style.transform="";}});
+  if(!card)return;
+  card.classList.add("tilt");
+  const r=card.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+  card.style.transform=`perspective(800px) rotateX(${(-y*10).toFixed(2)}deg) rotateY(${(x*10).toFixed(2)}deg) translateY(-4px)`;
+});
+
+initialize();
+</script>
+</body>
+</html>
